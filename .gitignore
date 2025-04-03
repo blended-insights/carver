@@ -50,3 +50,4 @@ out
 .env.local
 .env.development.local
 .env.test
+test-output
