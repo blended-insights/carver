@@ -57,7 +57,8 @@
       "plugin": "@nx/jest/plugin",
       "options": {
         "targetName": "test"
-      }
+      },
+      "exclude": ["packages/watcher-e2e/**/*"]
     }
   ],
   "targetDefaults": {
@@ -66,6 +67,11 @@
     },
     "test": {
       "dependsOn": ["^build"]
+    },
+    "@nx/esbuild:esbuild": {
+      "cache": true,
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"]
     }
   },
   "generators": {

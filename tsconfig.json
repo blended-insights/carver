@@ -8,6 +8,12 @@
     },
     {
       "path": "./packages/web"
+    },
+    {
+      "path": "./packages/watcher-e2e"
+    },
+    {
+      "path": "./packages/watcher"
     }
   ]
 }
