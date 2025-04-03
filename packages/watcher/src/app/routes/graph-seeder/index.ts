@@ -1,11 +1,9 @@
-// Next.js API route handler
-import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
 import * as fs from 'fs';
-import dotenv from 'dotenv';
 import { Redis } from 'ioredis';
 import * as neo4j from 'neo4j-driver';
 import crypto from 'crypto';
+import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 
 // Import graph-seeder modules
 import {
@@ -37,16 +35,16 @@ import {
 
 import logger from '@/utils/logger';
 
-// Load environment variables
-dotenv.config();
-
 // Initialize Redis client
 const redis = new Redis(process.env.REDIS_URL || "redis://localhost:6379");
 
 // Create Neo4j driver
 const driver = neo4j.driver(
-  process.env.NEO4J_URI!,
-  neo4j.auth.basic(process.env.NEO4J_USERNAME!, process.env.NEO4J_PASSWORD!),
+  process.env.NEO4J_URI || (() => { throw new Error("NEO4J_URI is not defined in the environment variables"); })(),
+  neo4j.auth.basic(
+    process.env.NEO4J_USERNAME || (() => { throw new Error("NEO4J_USERNAME is not defined in the environment variables"); })(),
+    process.env.NEO4J_PASSWORD || (() => { throw new Error("NEO4J_PASSWORD is not defined in the environment variables"); })(),
+  ),
 );
 
 /**
@@ -582,62 +580,129 @@ async function seedGraph(options: { root: string; project: string }): Promise<{ 
   }
 }
 
-// API routes
-export async function GET(request: NextRequest) {
-  // Extract query parameters
-  const searchParams = request.nextUrl.searchParams;
-  const path = searchParams.get('path');
-  const project = searchParams.get('project');
-  
-  if (!path || !project) {
-    return NextResponse.json({ 
-      success: false,
-      message: "Missing required parameters: path and project" 
-    }, { status: 400 });
+// Define schemas for request parameters
+const queryStringSchema = {
+  type: 'object',
+  required: ['path', 'project'],
+  properties: {
+    path: { type: 'string' },
+    project: { type: 'string' }
   }
-  
-  try {
-    const result = await seedGraph({root: path, project});
-    
-    if (result.success) {
-      return NextResponse.json(result, { status: 200 });
-    } else {
-      return NextResponse.json(result, { status: 400 });
-    }
-  } catch (error) {
-    logger.error("Error in API route:", error);
-    return NextResponse.json({ 
-      success: false, 
-      message: `Server error: ${error instanceof Error ? error.message : String(error)}` 
-    }, { status: 500 });
-  }
-}
+};
 
-export async function POST(request: NextRequest) {
-  try {
-    // Extract body parameters
-    const body = await request.json();
-    const { path, project } = body;
-    
-    if (!path || !project) {
-      return NextResponse.json({ 
-        success: false,
-        message: "Missing required parameters in request body: path and project" 
-      }, { status: 400 });
-    }
-    
-    const result = await seedGraph({root: path, project});
-    
-    if (result.success) {
-      return NextResponse.json(result, { status: 200 });
-    } else {
-      return NextResponse.json(result, { status: 400 });
-    }
-  } catch (error) {
-    logger.error("Error in API route:", error);
-    return NextResponse.json({ 
-      success: false, 
-      message: `Server error: ${error instanceof Error ? error.message : String(error)}` 
-    }, { status: 500 });
+const bodySchema = {
+  type: 'object',
+  required: ['path', 'project'],
+  properties: {
+    path: { type: 'string' },
+    project: { type: 'string' }
   }
+};
+
+export default async function (fastify: FastifyInstance) {
+  // GET route handler
+  fastify.get('/', {
+    schema: {
+      querystring: queryStringSchema,
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            message: { type: 'string' }
+          }
+        },
+        400: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            message: { type: 'string' }
+          }
+        },
+        500: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            message: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request: FastifyRequest<{
+    Querystring: {
+      path: string;
+      project: string;
+    }
+  }>, reply: FastifyReply) => {
+    try {
+      const { path, project } = request.query;
+      
+      const result = await seedGraph({root: path, project});
+      
+      if (result.success) {
+        return reply.code(200).send(result);
+      } else {
+        return reply.code(400).send(result);
+      }
+    } catch (error) {
+      logger.error("Error in GET route:", error);
+      return reply.code(500).send({ 
+        success: false, 
+        message: `Server error: ${error instanceof Error ? error.message : String(error)}` 
+      });
+    }
+  });
+
+  // POST route handler
+  fastify.post('/', {
+    schema: {
+      body: bodySchema,
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            message: { type: 'string' }
+          }
+        },
+        400: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            message: { type: 'string' }
+          }
+        },
+        500: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            message: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request: FastifyRequest<{
+    Body: {
+      path: string;
+      project: string;
+    }
+  }>, reply: FastifyReply) => {
+    try {
+      const { path, project } = request.body;
+      
+      const result = await seedGraph({root: path, project});
+      
+      if (result.success) {
+        return reply.code(200).send(result);
+      } else {
+        return reply.code(400).send(result);
+      }
+    } catch (error) {
+      logger.error("Error in POST route:", error);
+      return reply.code(500).send({ 
+        success: false, 
+        message: `Server error: ${error instanceof Error ? error.message : String(error)}` 
+      });
+    }
+  });
 }

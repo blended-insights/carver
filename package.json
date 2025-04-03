@@ -1,8 +1,23 @@
 {
   "name": "@carver/source",
   "version": "0.0.0",
-  "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "dev": "npx nx run-many --target=dev --projects=watcher,web"
+  },
+  "keywords": [
+    "ai",
+    "cli",
+    "assistant",
+    "codebase",
+    "engineering",
+    "openai",
+    "neo4j"
+  ],
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "author": "blended-insights",
+  "license": "MIT with Commons Clause",
   "private": true,
   "devDependencies": {
     "@nx/devkit": "20.7.1",

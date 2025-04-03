@@ -15,6 +15,7 @@ RUN addgroup --system watcher && \
           adduser --system -G watcher watcher
 
 COPY packages/watcher/dist watcher/
+COPY packages/watcher/path-alias-resolver.js watcher/
 RUN chown -R watcher:watcher .
 
 # You can remove this install step if you build with `--bundle` option.
