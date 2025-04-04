@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { FileSystemService } from '../services/filesystem.service';
-import { FileNode } from '@/lib/seeder/types';
+import { FileSystemService } from '@carver/shared';
+import { FileNode } from '@carver/shared';
 
 // Mock fs and path modules
 jest.mock('fs');

@@ -1,13 +1,51 @@
 import * as neo4j from 'neo4j-driver';
 import { Redis } from 'ioredis';
-import {
-  FileNode,
-  FunctionNode,
-  ClassNode,
-  VariableNode,
-  ImportNode,
-  ExportNode
-} from '@/lib/seeder/types';
+
+// These types were originally imported from '@/lib/seeder/types'
+// We'll need to export them from the shared package
+export interface FileNode {
+  path: string;
+  name: string;
+  extension: string;
+  content: string;
+}
+
+export interface FunctionNode {
+  name: string;
+  filePath: string;
+  lineStart: number;
+  lineEnd: number;
+  parameters: string[];
+}
+
+export interface ClassNode {
+  name: string;
+  filePath: string;
+  lineStart: number;
+  lineEnd: number;
+  methods: string[];
+  properties: string[];
+}
+
+export interface VariableNode {
+  name: string;
+  filePath: string;
+  type: string;
+  line: number;
+}
+
+export interface ImportNode {
+  source: string;
+  filePath: string;
+  line: number;
+}
+
+export interface ExportNode {
+  name: string;
+  filePath: string;
+  line: number;
+  isDefault: boolean;
+}
 
 /**
  * Interface for Neo4j Service

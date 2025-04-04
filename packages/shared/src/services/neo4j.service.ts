@@ -1,13 +1,13 @@
 import * as neo4j from 'neo4j-driver';
-import logger from '@/utils/logger';
-import {
-  FunctionNode,
-  ClassNode,
-  VariableNode,
-  ImportNode,
-  ExportNode
-} from '@/lib/seeder/types';
-import { INeo4jService } from '@/interfaces/services.interface';
+import { 
+  INeo4jService, 
+  FunctionNode, 
+  ClassNode, 
+  VariableNode, 
+  ImportNode, 
+  ExportNode 
+} from '../interfaces/services.interface';
+import logger from 'src/utils/logger';
 
 /**
  * Service to handle all Neo4j database operations

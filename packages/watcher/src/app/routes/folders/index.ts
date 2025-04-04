@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import logger from '@/utils/logger';
-import { fileSystemService } from '@/services';
+import { fileSystemService } from '@carver/shared';
 
 /**
  * Route handler for listing folders from USER_MOUNT environment variable

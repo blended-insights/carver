@@ -17,6 +17,10 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "es2022",
-    "customConditions": ["development"]
+    "customConditions": ["development"],
+    "paths": {
+      "@carver/shared": ["packages/shared/src/index.ts"],
+      "@carver/shared/*": ["packages/shared/src/*"]
+    }
   }
 }

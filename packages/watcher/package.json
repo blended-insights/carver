@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
+    "@carver/shared": "0.0.1",
     "@fastify/autoload": "~6.2.0",
     "@fastify/sensible": "~6.0.3",
     "chokidar": "^3.5.3",

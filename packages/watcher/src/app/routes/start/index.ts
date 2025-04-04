@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import watcherManager from '@/lib/watcher';
-import { fileSystemService } from '@/services';
+import { fileSystemService } from '@carver/shared';
 import logger from '@/utils/logger';
 
 const queryStringSchema = {

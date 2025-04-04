@@ -1,10 +1,18 @@
 import * as neo4j from 'neo4j-driver';
-import { Neo4jService } from '../services/neo4j.service';
-import logger from '@/utils/logger';
+import { Neo4jService } from '@carver/shared';
 
 // Mock neo4j driver
 jest.mock('neo4j-driver');
-jest.mock('@/utils/logger');
+
+// Mock the console logger used in the shared package
+const originalConsole = global.console;
+global.console = {
+  ...originalConsole,
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  debug: jest.fn(),
+};
 
 describe('Neo4jService', () => {
   let neo4jService: Neo4jService;
@@ -23,6 +31,7 @@ describe('Neo4jService', () => {
   
   afterAll(() => {
     process.env = originalEnv;
+    global.console = originalConsole;
   });
   
   beforeEach(() => {
@@ -120,7 +129,7 @@ describe('Neo4jService', () => {
       mockSession.run.mockRejectedValueOnce(error);
       
       await expect(neo4jService.createConstraintsAndIndexes(mockSession)).rejects.toThrow(error);
-      expect(logger.error).toHaveBeenCalled();
+      expect(console.error).toHaveBeenCalled();
     });
   });
   
@@ -145,7 +154,7 @@ describe('Neo4jService', () => {
       mockSession.run.mockRejectedValueOnce(error);
       
       await expect(neo4jService.createOrGetProject(mockSession, projectName, rootPath)).rejects.toThrow(error);
-      expect(logger.error).toHaveBeenCalled();
+      expect(console.error).toHaveBeenCalled();
     });
   });
   
@@ -170,7 +179,7 @@ describe('Neo4jService', () => {
       mockSession.run.mockRejectedValueOnce(error);
       
       await expect(neo4jService.createVersion(mockSession, versionName, projectName)).rejects.toThrow(error);
-      expect(logger.error).toHaveBeenCalled();
+      expect(console.error).toHaveBeenCalled();
     });
   });
   
@@ -195,7 +204,7 @@ describe('Neo4jService', () => {
       mockSession.run.mockRejectedValueOnce(error);
       
       await expect(neo4jService.markFileAsDeleted(mockSession, filePath, versionName)).rejects.toThrow(error);
-      expect(logger.error).toHaveBeenCalled();
+      expect(console.error).toHaveBeenCalled();
     });
   });
   

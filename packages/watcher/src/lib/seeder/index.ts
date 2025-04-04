@@ -1,14 +1,11 @@
-// Export everything from seeder
-export type * from './types';
-
 import path from 'path';
 import logger from '@/utils/logger';
 
 // Import services
-import { neo4jService, redisService, fileSystemService } from '@/services';
+import { neo4jService, redisService, fileSystemService } from '@carver/shared';
 
 // Import seeder modules
-import { type FileNode } from './types';
+import { type FileNode } from '@carver/shared';
 
 import {
   createTsMorphProject,

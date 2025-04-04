@@ -6,7 +6,7 @@ import type {
   VariableNode,
   ExportNode,
   ClassNode,
-} from "./types";
+} from "@carver/shared";
 
 /**
  * Initializes a ts-morph Project for analyzing TypeScript files

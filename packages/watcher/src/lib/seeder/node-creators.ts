@@ -1,5 +1,5 @@
 import * as neo4j from "neo4j-driver";
-import type { ImportNode, ExportNode, FunctionNode, ClassNode, VariableNode } from "./types";
+import type { ImportNode, ExportNode, FunctionNode, ClassNode, VariableNode } from "@carver/shared";
 
 /**
  * Creates an Import node and relationships

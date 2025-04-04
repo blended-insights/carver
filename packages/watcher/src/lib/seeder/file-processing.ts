@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import * as neo4j from "neo4j-driver";
 import logger from "@/utils/logger";
-import type { FileNode } from "./types";
+import type { FileNode } from "@carver/shared";
 
 /**
  * Processes a directory to create File and Directory nodes

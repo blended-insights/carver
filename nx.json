@@ -28,7 +28,8 @@
           "buildDepsName": "build-deps",
           "watchDepsName": "watch-deps"
         }
-      }
+      },
+      "exclude": ["packages/shared/*"]
     },
     {
       "plugin": "@nx/eslint/plugin",
@@ -59,6 +60,15 @@
         "targetName": "test"
       },
       "exclude": ["packages/watcher-e2e/**/*"]
+    },
+    {
+      "plugin": "@nx/js/typescript",
+      "include": ["packages/shared/*"],
+      "options": {
+        "typecheck": {
+          "targetName": "typecheck"
+        }
+      }
     }
   ],
   "targetDefaults": {

@@ -4,7 +4,7 @@ import Fastify from 'fastify';
 import { app } from './app/app';
 import watcherManager from './lib/watcher';
 import logger from './utils/logger';
-import { initializeServices, cleanupServices } from './services';
+import { initializeServices, cleanupServices } from '@carver/shared';
 
 const host = process.env.HOST ?? 'localhost';
 const port = process.env.PORT ? Number(process.env.PORT) : 4000;
