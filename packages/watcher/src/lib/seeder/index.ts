@@ -50,19 +50,18 @@ export async function seedGraphForFolder(options: {
     };
   }
 
-  const session = neo4jService.getSession();
   try {
     // Create unique constraints and indexes
-    await neo4jService.createConstraintsAndIndexes(session);
+    await neo4jService.createConstraintsAndIndexes();
 
     // Create or get Project node
-    await neo4jService.createOrGetProject(session, projectName, rootPath);
+    await neo4jService.createOrGetProject( projectName, rootPath);
 
     // Create new Version node
-    await neo4jService.createVersion(session, versionName, projectName);
+    await neo4jService.createVersion( versionName, projectName);
 
     // Process the file structure (directories and files)
-    await processDirectory(session, rootPath, rootPath, projectName);
+    await processDirectory( rootPath, rootPath, projectName);
 
     // Get all files from disk
     const filesFromDisk = fileSystemService.getAllFilesFromDisk(rootPath);
@@ -88,7 +87,7 @@ export async function seedGraphForFolder(options: {
       logger.info(`Marking file as deleted: ${filePath}`);
 
       // Mark file as deleted in current version
-      await neo4jService.markFileAsDeleted(session, filePath, versionName);
+      await neo4jService.markFileAsDeleted( filePath, versionName);
 
       // Remove from Redis
       await redisService.deleteFileData(projectName, filePath);
@@ -161,7 +160,7 @@ export async function seedGraphForFolder(options: {
 
           // First, handle deleted entities in the file (if the file already existed)
           await neo4jService.handleDeletedEntities(
-            session,
+            
             file.path,
             functions,
             classes,
@@ -170,7 +169,7 @@ export async function seedGraphForFolder(options: {
 
           // Process entity movements (if they come from other files)
           await neo4jService.processEntityMovements(
-            session,
+            
             file.path,
             functions,
             classes,
@@ -179,16 +178,16 @@ export async function seedGraphForFolder(options: {
 
           // Create file's relationship to current version
           await neo4jService.createFileVersionRelationship(
-            session,
+            
             file.path,
             versionName
           );
 
           // Create entities in Neo4j
           for (const func of functions) {
-            await neo4jService.createFunctionNode(session, func);
+            await neo4jService.createFunctionNode( func);
             await neo4jService.linkEntityToVersion(
-              session,
+              
               'Function',
               func.name,
               func.filePath,
@@ -197,9 +196,9 @@ export async function seedGraphForFolder(options: {
           }
 
           for (const cls of classes) {
-            await neo4jService.createClassNode(session, cls);
+            await neo4jService.createClassNode( cls);
             await neo4jService.linkEntityToVersion(
-              session,
+              
               'Class',
               cls.name,
               cls.filePath,
@@ -208,9 +207,9 @@ export async function seedGraphForFolder(options: {
           }
 
           for (const variable of variables) {
-            await neo4jService.createVariableNode(session, variable);
+            await neo4jService.createVariableNode( variable);
             await neo4jService.linkEntityToVersion(
-              session,
+              
               'Variable',
               variable.name,
               variable.filePath,
@@ -219,18 +218,18 @@ export async function seedGraphForFolder(options: {
           }
 
           for (const importNode of imports) {
-            await neo4jService.createImportNode(session, importNode);
+            await neo4jService.createImportNode( importNode);
           }
 
           for (const exportNode of exports) {
-            await neo4jService.createExportNode(session, exportNode);
+            await neo4jService.createExportNode( exportNode);
           }
 
           // Process function calls
           const functionCalls = analyzeFunctionCalls(functions, sourceFile);
           if (functionCalls.length > 0) {
             await neo4jService.createFunctionCallRelationships(
-              session,
+              
               file.path,
               functionCalls
             );
@@ -260,6 +259,6 @@ export async function seedGraphForFolder(options: {
       }`,
     };
   } finally {
-    await session.close();
+    await neo4jService.close();
   }
 }

@@ -1,18 +1,16 @@
 import fs from "fs";
 import path from "path";
-import * as neo4j from "neo4j-driver";
 import logger from "@/utils/logger";
-import type { FileNode } from "@carver/shared";
+import { FileNode } from "@carver/shared";
+import { neo4jService } from "@carver/shared";
 
 /**
  * Processes a directory to create File and Directory nodes
- * @param session - Neo4j session
  * @param dirPath - Current directory path
  * @param projectRoot - Project root directory
  * @param projectName - Name of the project
  */
 export async function processDirectory(
-  session: neo4j.Session,
   dirPath: string,
   projectRoot: string,
   projectName: string,
@@ -25,98 +23,130 @@ export async function processDirectory(
     return;
   }
 
-  // Create Directory node
+  // Create Directory node if there's a relative path
   if (relativePath) {
-    await session.run(
-      `
-      MERGE (d:Directory {path: $path})
-      SET d.name = $name
-      WITH d
-      MATCH (p:Project {name: $projectName})
-      MERGE (p)-[:CONTAINS]->(d)
-      `,
-      { path: relativePath, name: dirName, projectName },
+    // Create project if it doesn't exist
+    await neo4jService.createOrGetProject(projectName, projectRoot);
+    
+    // Create directory node
+    await neo4jService.createDirectoryNode(
+      relativePath,
+      dirName,
+      projectName
     );
-
-    // Create CONTAINS relationship with parent directory
+    
+    // Create parent-child directory relationship
     const parentPath = path.dirname(relativePath);
     if (parentPath !== ".") {
-      await session.run(
-        `
-        MATCH (parent:Directory {path: $parentPath})
-        MATCH (child:Directory {path: $childPath})
-        MERGE (parent)-[:CONTAINS]->(child)
-        `,
-        { parentPath, childPath: relativePath },
+      await neo4jService.createDirectoryRelationship(
+        parentPath,
+        relativePath
       );
     }
-  }
+    
+    // Process children
+    const entries = fs.readdirSync(dirPath, { withFileTypes: true });
 
-  // Process children
-  const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+    for (const entry of entries) {
+      const entryPath = path.join(dirPath, entry.name);
 
-  for (const entry of entries) {
-    const entryPath = path.join(dirPath, entry.name);
-
-    if (entry.isDirectory()) {
-      // Recursively process subdirectories
-      await processDirectory(session, entryPath, projectRoot, projectName);
-    } else if (entry.isFile()) {
-      // Create File node
-      const fileName = entry.name;
-      const fileExtension = path.extname(fileName);
-      const fileRelativePath = path.relative(projectRoot, entryPath);
-
-      await session.run(
-        `
-        MERGE (f:File {path: $path})
-        SET f.name = $name,
-            f.extension = $extension
-        WITH f
-        MATCH (d:Directory {path: $dirPath})
-        MATCH (p:Project {name: $projectName})
-        MERGE (p)-[:CONTAINS]->(d)
-        MERGE (d)-[:CONTAINS]->(f)
-        `,
-        {
-          path: fileRelativePath,
-          name: fileName,
-          extension: fileExtension,
-          dirPath: path.dirname(fileRelativePath),
-          projectName,
-        },
-      );
+      if (entry.isDirectory()) {
+        // Recursively process subdirectories
+        await processDirectory(entryPath, projectRoot, projectName);
+      } else if (entry.isFile()) {
+        // Process file
+        await processFile(entryPath, projectRoot, projectName);
+      }
     }
   }
 }
 
 /**
- * Retrieves all File nodes from the database
+ * Process a single file to create File node and relationships
+ * @param filePath - Path to the file
+ * @param projectRoot - Project root directory
+ * @param projectName - Project name
  */
-export async function getFiles(session: neo4j.Session, projectRoot: string): Promise<FileNode[]> {
-  const result = await session.run(
-    `
-    MATCH (f:File)
-    RETURN f.path AS path, f.name AS name, f.extension AS extension
-    `,
+async function processFile(
+  filePath: string,
+  projectRoot: string,
+  projectName: string
+): Promise<void> {
+  const fileName = path.basename(filePath);
+  const fileExtension = path.extname(fileName);
+  const fileRelativePath = path.relative(projectRoot, filePath);
+  const dirRelativePath = path.dirname(fileRelativePath);
+  
+  // Create file node
+  await neo4jService.createFileNode(
+    fileRelativePath,
+    fileName,
+    fileExtension,
+    dirRelativePath,
+    projectName
   );
+  
+  // Get the latest version and create a relationship if it exists
+  const versionName = await neo4jService.getLatestVersionName(projectName);
+  if (versionName) {
+    await neo4jService.createFileVersionRelationship(fileRelativePath, versionName);
+  }
+}
 
-  return result.records.map((record) => {
-    const filePath = record.get("path");
-    const fullPath = path.join(projectRoot, filePath);
+/**
+ * Retrieves all File nodes from the database
+ * @param projectRoot - Project root directory
+ */
+export async function getFiles(projectRoot: string): Promise<FileNode[]> {
+  // Get all files from Neo4j
+  const files = await neo4jService.getAllFiles();
+  
+  // Add content to each file
+  return files.map((file) => {
+    const fullPath = path.join(projectRoot, file.path);
     let content = "";
 
     try {
       content = fs.readFileSync(fullPath, "utf-8");
     } catch (error) {
-      logger.warn(`Could not read file content for ${filePath}`);
+      logger.warn(`Could not read file content for ${file.path}`);
     }
 
     return {
-      path: filePath,
-      name: record.get("name"),
-      extension: record.get("extension"),
+      path: file.path,
+      name: file.name,
+      extension: file.extension,
       content,
     };
   });
+}
+
+/**
+ * Creates a new version for a project and returns the version name
+ * @param projectName - Project name
+ */
+export async function createNewVersion(projectName: string): Promise<string> {
+  // Create timestamp-based version name
+  const versionName = `v_${Date.now()}`;
+  
+  // Create version using neo4jService
+  await neo4jService.createVersion(versionName, projectName);
+  
+  return versionName;
+}
+
+/**
+ * Marks a file as deleted in the current version
+ * @param filePath - File path
+ * @param projectName - Project name
+ */
+export async function markFileAsDeleted(filePath: string, projectName: string): Promise<void> {
+  // Get the latest version
+  const versionName = await neo4jService.getLatestVersionName(projectName);
+  
+  if (versionName) {
+    await neo4jService.markFileAsDeleted(filePath, versionName);
+  } else {
+    logger.warn(`No version found for project ${projectName} when marking file ${filePath} as deleted`);
+  }
 }

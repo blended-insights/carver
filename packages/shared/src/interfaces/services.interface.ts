@@ -53,42 +53,65 @@ export interface ExportNode {
 export interface INeo4jService {
   getSession(): neo4j.Session;
   close(): Promise<void>;
-  createConstraintsAndIndexes(session: neo4j.Session): Promise<void>;
-  createOrGetProject(session: neo4j.Session, projectName: string, rootPath: string): Promise<void>;
-  createVersion(session: neo4j.Session, versionName: string, projectName: string): Promise<void>;
-  markFileAsDeleted(session: neo4j.Session, filePath: string, versionName: string): Promise<void>;
-  createFileVersionRelationship(session: neo4j.Session, filePath: string, versionName: string): Promise<void>;
+  createConstraintsAndIndexes(): Promise<void>;
+  createOrGetProject(projectName: string, rootPath: string): Promise<void>;
+  createVersion(versionName: string, projectName: string): Promise<void>;
+  markFileAsDeleted(filePath: string, versionName: string): Promise<void>;
+  createFileVersionRelationship(
+    filePath: string,
+    versionName: string
+  ): Promise<void>;
   linkEntityToVersion(
-    session: neo4j.Session,
     entityType: 'Function' | 'Class' | 'Variable',
     name: string,
     filePath: string,
     versionName: string
   ): Promise<void>;
   handleDeletedEntities(
-    session: neo4j.Session,
     filePath: string,
     currentFunctions: FunctionNode[],
     currentClasses: ClassNode[],
-    versionName: string,
+    versionName: string
   ): Promise<void>;
   processEntityMovements(
-    session: neo4j.Session,
     filePath: string,
     functions: FunctionNode[],
     classes: ClassNode[],
-    versionName: string,
+    versionName: string
   ): Promise<void>;
-  createFunctionNode(session: neo4j.Session, func: FunctionNode): Promise<void>;
-  createClassNode(session: neo4j.Session, cls: ClassNode): Promise<void>;
-  createVariableNode(session: neo4j.Session, variable: VariableNode): Promise<void>;
-  createImportNode(session: neo4j.Session, importNode: ImportNode): Promise<void>;
-  createExportNode(session: neo4j.Session, exportNode: ExportNode): Promise<void>;
+  createFunctionNode(func: FunctionNode): Promise<void>;
+  createClassNode(cls: ClassNode): Promise<void>;
+  createVariableNode(variable: VariableNode): Promise<void>;
+  createImportNode(importNode: ImportNode): Promise<void>;
+  createExportNode(exportNode: ExportNode): Promise<void>;
   createFunctionCallRelationships(
-    session: neo4j.Session,
     filePath: string,
     functionCalls: { caller: string; callee: string }[]
   ): Promise<void>;
+
+  // File processing methods
+  createDirectoryNode(
+    dirPath: string,
+    dirName: string,
+    projectName: string
+  ): Promise<void>;
+
+  createDirectoryRelationship(
+    parentPath: string,
+    childPath: string
+  ): Promise<void>;
+
+  createFileNode(
+    filePath: string,
+    fileName: string,
+    fileExtension: string,
+    dirPath: string,
+    projectName: string
+  ): Promise<void>;
+
+  getLatestVersionName(projectName: string): Promise<string | null>;
+
+  getAllFiles(): Promise<{ path: string; name: string; extension: string }[]>;
 }
 
 /**
@@ -107,13 +130,13 @@ export interface IRedisService {
   ): Promise<void>;
   deleteFileData(projectName: string, filePath: string): Promise<void>;
   publishFileChange(
-    processId: string, 
-    eventType: 'add' | 'change' | 'unlink', 
+    processId: string,
+    eventType: 'add' | 'change' | 'unlink',
     filePath: string
   ): Promise<void>;
   publishStatus(
-    processId: string, 
-    status: string, 
+    processId: string,
+    status: string,
     message?: string
   ): Promise<void>;
 }
@@ -123,10 +146,14 @@ export interface IRedisService {
  */
 export interface IFileSystemService {
   calculateHash(content: string): string;
-  getAllFilesFromDisk(rootPath: string): { relativePath: string; content: string }[];
+  getAllFilesFromDisk(
+    rootPath: string
+  ): { relativePath: string; content: string }[];
   convertToFileNode(file: { relativePath: string; content: string }): FileNode;
   directoryExists(dirPath: string): boolean;
-  listDirectories(dirPath: string): { name: string; path: string; size: number }[];
+  listDirectories(
+    dirPath: string
+  ): { name: string; path: string; size: number }[];
   filterTypeScriptFiles(files: FileNode[]): FileNode[];
   filterLargeFiles(files: FileNode[], maxSize?: number): FileNode[];
 }
@@ -138,7 +165,11 @@ export interface IWatcherManager {
   startWatcher(folderPath: string, projectName: string): Promise<string>;
   restartWatcher(processId: string): Promise<boolean>;
   killWatcher(processId: string): Promise<boolean>;
-  getActiveWatchers(): { processId: string; folderPath: string; projectName: string }[];
+  getActiveWatchers(): {
+    processId: string;
+    folderPath: string;
+    projectName: string;
+  }[];
   getActiveWatcherIds(): string[];
   cleanup(): Promise<void>;
 }
