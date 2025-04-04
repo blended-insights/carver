@@ -1,21 +1,25 @@
-/* eslint-disable */
-import { readFileSync } from 'fs';
+import { Config } from 'jest';
 
-// Reading the SWC compilation config for the spec files
-const swcJestConfig = JSON.parse(
-  readFileSync(`${__dirname}/.spec.swcrc`, 'utf-8')
-);
-
-// Disable .swcrc look-up by SWC core because we're passing in swcJestConfig ourselves
-swcJestConfig.swcrc = false;
-
-export default {
+const config: Config = {
   displayName: 'watcher',
-  preset: '../../jest.preset.js',
+  preset: 'ts-jest',
   testEnvironment: 'node',
+  roots: ['<rootDir>/src'],
   transform: {
-    '^.+\\.[tj]s$': ['@swc/jest', swcJestConfig],
+    '^.+\\.tsx?$': 'ts-jest',
   },
-  moduleFileExtensions: ['ts', 'js', 'html'],
-  coverageDirectory: 'test-output/jest/coverage',
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/src/$1'
+  },
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  coverageDirectory: 'coverage',
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    '!src/tests/**',
+    '!**/node_modules/**',
+  ],
+  setupFilesAfterEnv: ['<rootDir>/src/tests/setup.ts'],
+  testMatch: ['**/?(*.)+(spec|test).ts?(x)'],
 };
+
+export default config;

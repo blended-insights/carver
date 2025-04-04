@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-namespace */
+
 /**
  * Represents a project node in the graph database
  */

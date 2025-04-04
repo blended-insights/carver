@@ -1,6 +1,5 @@
 
 const { resolve } = require('path');
-const fs = require('fs');
 
 /**
  * This module exports plugins for esbuild to handle TypeScript path aliases
