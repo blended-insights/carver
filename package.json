@@ -5,7 +5,8 @@
   "description": "A codebase assistant that helps you understand and navigate your codebase using AI.",
   "scripts": {
     "dev": "npx nx run-many --target=dev --projects=watcher,web",
-    "dev:watcher": "npx nx run watcher:serve --configuration=development "
+    "dev:watcher": "npx nx run watcher:serve --configuration=development",
+    "dev:web": "npx nx run web:dev"
   },
   "keywords": [
     "ai",

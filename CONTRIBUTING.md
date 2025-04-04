@@ -1,6 +1,6 @@
-# Contributing to Carver CLI
+# Contributing to Carver
 
-Thank you for your interest in contributing to Carver CLI! This document outlines the process for contributing to the project and provides guidelines to help you get started.
+Thank you for your interest in contributing to Carver! This document outlines the process for contributing to the project and provides guidelines to help you get started.
 
 ## Table of Contents
 
@@ -55,22 +55,69 @@ By contributing to this project, you agree that your contributions will be licen
 
 ### Project Structure
 
-The project follows a typical TypeScript project structure:
+Carver is an NX monorepo with multiple packages:
 
 ```
 carver/
-├── src/                 # Source code
-│   ├── commands/        # CLI commands
-│   ├── utils/           # Utility functions
-│   └── index.ts         # Entry point
-├── dist/                # Compiled output (generated)
-├── tests/               # Test files
-├── .env                 # Environment variables (create from .env.example)
-├── tsconfig.json        # TypeScript configuration
-└── eslint.config.mjs    # ESLint configuration
+├── packages/                # NX packages
+│   ├── web/                 # Next.js web application
+│   ├── watcher/             # File watcher service
+│   ├── shared/              # Shared utilities and types
+│   ├── watcher-e2e/         # End-to-end tests for watcher
+│   └── web-e2e/             # End-to-end tests for web
+├── node_modules/            # Project dependencies
+├── dist/                    # Compiled output (generated)
+├── nx.json                  # NX configuration
+├── tsconfig.json            # TypeScript base configuration
+└── package.json             # Workspace root package.json
+```
+
+### Next.js Project Structure
+
+The web application follows the Next.js App Router convention:
+
+```
+packages/web/
+├── src/                 
+│   ├── app/             # Next.js App Router structure
+│   │   ├── api/         # API routes
+│   │   ├── layout.tsx   # Root layout component
+│   │   └── page.tsx     # Home page component
+│   ├── components/      # Reusable React components
+│   ├── hooks/           # Custom React hooks
+│   └── utils/           # Utility functions
+├── public/              # Static assets
+├── next.config.js       # Next.js configuration
+└── package.json         # Package-specific dependencies
 ```
 
 ## Development Workflow
+
+### Using NX Commands
+
+Carver uses NX to manage the workspace. Common commands include:
+
+```bash
+# Run all projects in development mode
+npm run dev
+
+# Run only the web project in development mode
+npm run dev:web
+
+# Run only the watcher project in development mode
+npm run dev:watcher
+
+# Build a specific project
+npx nx build web
+npx nx build watcher
+
+# Run tests for a specific project
+npx nx test web
+npx nx test watcher
+
+# Run linting for a specific project
+npx nx lint web
+```
 
 ### Branching Strategy
 
@@ -84,33 +131,6 @@ Create your feature branch from `develop`:
 git checkout develop
 git pull origin develop
 git checkout -b feature/your-feature-name
-```
-
-### Build Process
-
-The project uses TypeScript and compiles to JavaScript in the `dist/` directory:
-
-```bash
-# Clean and build the project
-npm run build
-
-# Development mode with hot reloading
-npm run dev
-```
-
-### Testing
-
-The project uses Jest for testing:
-
-```bash
-# Run all tests
-npm test
-
-# Run tests in watch mode during development
-npm run test:watch
-
-# Generate test coverage report
-npm run test:coverage
 ```
 
 ### Commit Messages
@@ -159,14 +179,14 @@ Types include:
 The project uses ESLint with Prettier for code linting and formatting:
 
 ```bash
-# Check for linting errors
-npm run lint
+# Check for linting errors across all projects
+npx nx run-many --target=lint --all
 
-# Automatically fix linting errors
-npm run lint:fix
+# Lint a specific project
+npx nx lint web
 
 # Format code with Prettier
-npm run format
+npx nx format:write
 ```
 
 ### Code Style Guidelines
@@ -182,7 +202,7 @@ We follow specific code style guidelines to maintain consistency across the code
   const message = "Hello, world!";
 
   // ❌ Bad
-  const message = "Hello, world!";
+  const message = 'Hello, world!';
   ```
 
 #### Formatting
@@ -195,63 +215,35 @@ We follow specific code style guidelines to maintain consistency across the code
 
 These rules are enforced by our Prettier configuration (`.prettierrc`) and detailed in our [Style Guide](docs/STYLE_GUIDE.md).
 
-### Validation
-
-The project uses Joi for command-line argument validation. When adding new commands or options:
-
-1. Define a schema in `src/utils/validation/schemas.ts`
-2. Use the `validateOptions` function to validate command options
-
-### Configuration
-
-The project uses a hierarchical configuration system:
-
-- Environment-specific configurations in `config/` directory
-- `.env` file for sensitive configuration (API keys, etc.)
-- Type-safe configuration access via `src/utils/config.ts`
-
-### Logging
-
-Use the Winston-based logger for consistent logging:
-
-```typescript
-import logger from "../utils/logger";
-
-// Log levels: error, warn, info, debug
-logger.error("Error message");
-logger.warn("Warning message");
-logger.info("Info message");
-logger.debug("Debug message");
-```
-
 ## Testing
 
-### Jest Framework
+### Test Frameworks
 
-Tests are written using Jest and are located in the `tests/` directory. The test structure mirrors the `src/` directory structure.
+The project uses Jest for unit tests and Playwright for end-to-end tests:
 
 ```bash
-# Run all tests
-npm test
+# Run Jest tests for all projects
+npx nx run-many --target=test --all
 
-# Run tests in watch mode during development
-npm run test:watch
+# Run tests for a specific project
+npx nx test web
 
-# Generate test coverage report
-npm run test:coverage
+# Run end-to-end tests
+npx nx e2e web-e2e
+npx nx e2e watcher-e2e
 ```
 
 ### Writing Tests
 
-- Create test files with `.test.ts` extension
+- Create test files with `.spec.ts` or `.test.ts` extension
 - Use descriptive `describe` and `it` blocks
-- Mock external services (OpenAI, Neo4j) in tests
-- Aim for at least 70% code coverage
+- Mock external services where appropriate
+- Aim for comprehensive test coverage
 
 Example test structure:
 
 ```typescript
-describe("MyFunction", () => {
+describe("MyComponent", () => {
   beforeEach(() => {
     // Setup
   });
@@ -260,7 +252,7 @@ describe("MyFunction", () => {
     // Cleanup
   });
 
-  it("should do something specific", () => {
+  it("should render correctly", () => {
     // Test
     expect(result).toBe(expected);
   });
@@ -269,18 +261,7 @@ describe("MyFunction", () => {
 
 ## Documentation
 
-### API Documentation
-
-The project uses TypeDoc to generate API documentation:
-
-```bash
-# Generate documentation
-npm run docs
-```
-
-This will create documentation in the `docs/` directory.
-
-### JSDoc Comments
+### Code Documentation
 
 Use JSDoc comments for all public functions, classes, and interfaces:
 
@@ -300,7 +281,7 @@ function myFunction(param1: string, param2: number): boolean {
 
 ### README Updates
 
-Keep the README.md updated with the latest features, examples, and usage instructions.
+Keep the README.md and package-specific README files updated with the latest features, examples, and usage instructions.
 
 ## Continuous Integration
 
@@ -312,18 +293,15 @@ The project uses GitHub Actions for continuous integration and deployment:
 
 ## Release Process
 
-The project uses semantic-release for automated versioning and releases:
+The project uses NX release for automated versioning and releases:
 
-1. Merge changes into the `main` branch
-2. CI automatically determines the next version based on commit messages
-3. CHANGELOG.md is automatically updated
-4. A new GitHub release is created
+```bash
+# Release with automatic versioning
+npx nx release
 
-To trigger specific release types:
-
-- `feat: ...` - Minor version bump (new feature)
-- `fix: ...` - Patch version bump (bug fix)
-- `BREAKING CHANGE: ...` - Major version bump (breaking change)
+# Dry run to see what would happen
+npx nx release --dry-run
+```
 
 ## Issue Reporting
 
@@ -347,4 +325,4 @@ For feature requests, please provide:
 
 ---
 
-Thank you for contributing to Carver CLI! Your efforts help make this tool better for everyone.
+Thank you for contributing to Carver! Your efforts help make this tool better for everyone.

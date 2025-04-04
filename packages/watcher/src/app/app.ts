@@ -1,5 +1,6 @@
 import { type FastifyInstance } from 'fastify';
 import AutoLoad from '@fastify/autoload';
+import cors from '@fastify/cors';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -18,7 +19,12 @@ import statusRoute from './routes/status/index';
 export interface AppOptions {}
 
 export async function app(fastify: FastifyInstance, opts: AppOptions) {
-  // Place here your custom code!
+  // Register CORS plugin to allow cross-origin requests
+  await fastify.register(cors, {
+    origin: true, // Allow all origins for development
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    credentials: true,
+  });
 
   // Check if we're in bundled mode by looking for specific paths
   const isBundled = !fs.existsSync(path.join(__dirname, 'plugins'));

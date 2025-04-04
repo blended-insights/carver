@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Title, Card, Text, Group, Button, Stack, Alert, Paper, SimpleGrid, Loader } from '@mantine/core';
 import { IconFolder, IconAlertCircle, IconCheck } from '@tabler/icons-react';
 import { Layout } from '../../components/Layout';
-import { fetchAvailableFolders, startWatcher, fetchWatcherStatus, Folder, WatcherProcess, StartWatcherResponse } from '../../utils/api';
+import { fetchAvailableFolders, startWatcher, fetchWatcherStatus, Folder, WatcherProcess } from '../../utils/api';
 import { useEvents } from '../../hooks/useEvents';
 import logger from '../../utils/logger';
 
@@ -58,7 +58,7 @@ export default function FoldersPage() {
       setError(null);
       setSuccess(null);
       
-      const response = await startWatcher(folderPath);
+      await startWatcher(folderPath);
       
       // No need to refetch watchers - we'll get updates via Redis events
       // The StatusNotification will be published when the watcher starts
