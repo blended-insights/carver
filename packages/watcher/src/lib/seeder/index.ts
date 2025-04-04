@@ -2,7 +2,12 @@ import path from 'path';
 import logger from '@/utils/logger';
 
 // Import services
-import { neo4jService, redisService, fileSystemService } from '@carver/shared';
+import { 
+  neo4jService, 
+  redisService, 
+  fileSystemService, 
+  createGitIgnoreParser 
+} from '@carver/shared';
 
 // Import seeder modules
 import { type FileNode } from '@carver/shared';

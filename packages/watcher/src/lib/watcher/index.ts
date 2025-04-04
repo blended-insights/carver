@@ -6,6 +6,7 @@ import {
   redisService,
   fileSystemService,
   type IWatcherManager,
+  createGitIgnoreParser,
 } from '@carver/shared';
 
 /**
@@ -21,6 +22,37 @@ export class WatcherManager implements IWatcherManager {
       projectName: string;
     }
   > = new Map();
+
+  /**
+   * Get ignore patterns based on .gitignore file
+   * @param folderPath Path to the folder to watch
+   * @returns Array of glob patterns to ignore
+   */
+  private getIgnorePatterns(folderPath: string): string[] {
+    // Initialize gitignore parser
+    const gitIgnoreParser = createGitIgnoreParser();
+    const gitIgnorePath = path.join(folderPath, '.gitignore');
+    
+    // Load gitignore patterns if available
+    const hasGitIgnore = gitIgnoreParser.loadFromFile(gitIgnorePath);
+    
+    if (hasGitIgnore) {
+      logger.info(`Loaded gitignore patterns from ${gitIgnorePath} for file watcher`);
+      return gitIgnoreParser.toChokidarIgnorePatterns();
+    } 
+    
+    // Default ignore patterns if no .gitignore file exists
+    logger.info(`No gitignore file found at ${gitIgnorePath}, using default exclusions for file watcher`);
+    return [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/.git/**',
+      '**/coverage/**',
+      '**/logs/**',
+      '**/.next/**',
+      '**/build/**',
+    ];
+  }
 
   /**
    * Start a new file watcher for a specific folder
@@ -72,18 +104,13 @@ export class WatcherManager implements IWatcherManager {
         `Graph seeded successfully for ${folderPath}`
       );
 
+      // Get ignore patterns based on .gitignore file
+      const ignorePatterns = this.getIgnorePatterns(folderPath);
+
       // Initialize chokidar watcher
       logger.info(`Initializing watcher for folder: ${folderPath}`);
       const watcher = chokidar.watch(folderPath, {
-        ignored: [
-          '**/node_modules/**',
-          '**/dist/**',
-          '**/.git/**',
-          '**/coverage/**',
-          '**/logs/**',
-          '**/.next/**',
-          '**/build/**',
-        ],
+        ignored: ignorePatterns,
         persistent: true,
         ignoreInitial: true,
         awaitWriteFinish: {
@@ -201,17 +228,12 @@ export class WatcherManager implements IWatcherManager {
         'Restarting file watcher'
       );
 
+      // Get ignore patterns based on .gitignore file
+      const ignorePatterns = this.getIgnorePatterns(watcherData.folderPath);
+
       // Re-initialize the watcher with the same settings
       const watcher = chokidar.watch(watcherData.folderPath, {
-        ignored: [
-          '**/node_modules/**',
-          '**/dist/**',
-          '**/.git/**',
-          '**/coverage/**',
-          '**/logs/**',
-          '**/.next/**',
-          '**/build/**',
-        ],
+        ignored: ignorePatterns,
         persistent: true,
         ignoreInitial: true,
         awaitWriteFinish: {

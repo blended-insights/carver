@@ -3,113 +3,7 @@ import * as path from 'path';
 import crypto from 'crypto';
 import { IFileSystemService, FileNode } from '../interfaces/services.interface';
 import logger from 'src/utils/logger';
-
-/**
- * Class to handle gitignore pattern matching
- */
-class GitIgnoreParser {
-  private patterns: { pattern: string; isNegated: boolean }[] = [];
-  
-  /**
-   * Load patterns from a gitignore file
-   * @param gitIgnorePath Path to the .gitignore file
-   */
-  loadFromFile(gitIgnorePath: string): boolean {
-    try {
-      if (!fs.existsSync(gitIgnorePath)) {
-        return false;
-      }
-      
-      const content = fs.readFileSync(gitIgnorePath, 'utf8');
-      this.parsePatterns(content);
-      return true;
-    } catch (error) {
-      logger.warn(`Error loading gitignore file: ${gitIgnorePath}`, error);
-      return false;
-    }
-  }
-  
-  /**
-   * Parse gitignore content into patterns
-   * @param content Content of the gitignore file
-   */
-  private parsePatterns(content: string): void {
-    this.patterns = content
-      .split('\n')
-      .map(line => line.trim())
-      // Filter out empty lines and comments
-      .filter(line => line && !line.startsWith('#'))
-      .map(pattern => {
-        const isNegated = pattern.startsWith('!');
-        // Remove negation character if present
-        const cleanPattern = isNegated ? pattern.substring(1) : pattern;
-        return { pattern: cleanPattern, isNegated };
-      });
-  }
-  
-  /**
-   * Convert a gitignore pattern to a regular expression
-   * @param pattern Gitignore pattern
-   */
-  private patternToRegExp(pattern: string): RegExp {
-    // Handle pattern directory separator
-    const normalizedPattern = pattern.replace(/\\/g, '/');
-    
-    let regexPattern = normalizedPattern
-      // Escape special regex characters except those with special meaning in gitignore
-      .replace(/[.+^$|{}()]/g, '\\$&')
-      // Handle ** pattern (matches any number of directories)
-      .replace(/\*\*/g, '.*')
-      // Handle * pattern (doesn't match directory separators)
-      .replace(/\*/g, '[^/]*')
-      // Handle ? pattern (single character but not directory separator)
-      .replace(/\?/g, '[^/]');
-    
-    // Handle leading slash - if pattern starts with /, it matches from the root
-    const anchorStart = normalizedPattern.startsWith('/');
-    regexPattern = anchorStart ? `^${regexPattern.substring(1)}` : `(^|/)${regexPattern}`;
-    
-    // Handle trailing slash - if pattern ends with /, it only matches directories
-    if (normalizedPattern.endsWith('/')) {
-      regexPattern = `${regexPattern.substring(0, regexPattern.length - 1)}(/.*)?$`;
-    } else {
-      // Otherwise match exact file or directory
-      regexPattern = `${regexPattern}(/.*)?$`;
-    }
-    
-    return new RegExp(regexPattern);
-  }
-  
-  /**
-   * Check if a path should be ignored
-   * @param filePath Path to check against gitignore patterns
-   * @param isDirectory Whether the path is a directory
-   */
-  shouldIgnore(filePath: string, isDirectory = false): boolean {
-    // Normalize path to use forward slashes
-    const normalizedPath = filePath.replace(/\\/g, '/');
-    
-    // Default to not ignoring
-    let shouldIgnore = false;
-    
-    // Apply patterns in order, with later patterns overriding earlier ones
-    for (const { pattern, isNegated } of this.patterns) {
-      const regex = this.patternToRegExp(pattern);
-      
-      // Special handling for directory patterns (ending with /)
-      if (pattern.endsWith('/') && !isDirectory) {
-        continue; // Skip directory-only patterns for files
-      }
-      
-      // If the pattern matches, set shouldIgnore based on whether it's negated
-      if (regex.test(normalizedPath)) {
-        shouldIgnore = !isNegated;
-      }
-    }
-    
-    return shouldIgnore;
-  }
-}
+import { createGitIgnoreParser } from '../utils/gitignore-parser';
 
 /**
  * Service to handle all file system operations
@@ -131,7 +25,7 @@ export class FileSystemService implements IFileSystemService {
     const result: { relativePath: string; content: string }[] = [];
     
     // Initialize gitignore parser
-    const gitIgnoreParser = new GitIgnoreParser();
+    const gitIgnoreParser = createGitIgnoreParser();
     const gitIgnorePath = path.join(rootPath, '.gitignore');
     
     // Load gitignore patterns if available
@@ -153,29 +47,16 @@ export class FileSystemService implements IFileSystemService {
           const relativePath = path.relative(rootPath, fullPath);
           
           // Default exclusions for directories
-          const defaultDirExclusions = [
-            entry.name.startsWith("."),
-            entry.name === "node_modules",
-            entry.name === "coverage",
-            entry.name === "dist",
-            entry.name === "docs",
-            entry.name === "logs"
-          ];
+          const defaultDirExclusions = gitIgnoreParser.getDefaultDirExclusions();
           
           // Default exclusions for files
-          const defaultFileExclusions = [
-            entry.name === ".DS_Store",
-            entry.name.startsWith(".env"),
-            entry.name.endsWith(".log"),
-            entry.name.endsWith(".pem"),
-            entry.name.endsWith(".tsbuildinfo")
-          ];
+          const defaultFileExclusions = gitIgnoreParser.getDefaultFileExclusions();
 
           if (entry.isDirectory()) {
             // Check gitignore patterns for directories if available, otherwise use defaults
             const shouldSkip = hasGitIgnore 
               ? gitIgnoreParser.shouldIgnore(relativePath, true)
-              : defaultDirExclusions.some(condition => condition);
+              : defaultDirExclusions.some(condition => condition(entry.name));
             
             if (!shouldSkip) {
               scanDir(fullPath);
@@ -185,7 +66,7 @@ export class FileSystemService implements IFileSystemService {
               // Check gitignore patterns for files if available, otherwise use defaults
               const shouldSkip = hasGitIgnore
                 ? gitIgnoreParser.shouldIgnore(relativePath, false)
-                : defaultFileExclusions.some(condition => condition);
+                : defaultFileExclusions.some(condition => condition(entry.name));
               
               if (!shouldSkip) {
                 const content = fs.readFileSync(fullPath, "utf-8");
@@ -239,7 +120,7 @@ export class FileSystemService implements IFileSystemService {
       const entries = fs.readdirSync(dirPath, { withFileTypes: true });
       
       // Initialize gitignore parser
-      const gitIgnoreParser = new GitIgnoreParser();
+      const gitIgnoreParser = createGitIgnoreParser();
       const gitIgnorePath = path.join(dirPath, '.gitignore');
       const hasGitIgnore = gitIgnoreParser.loadFromFile(gitIgnorePath);
       
