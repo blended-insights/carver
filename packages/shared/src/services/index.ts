@@ -1,11 +1,14 @@
 import neo4jService from './neo4j.service';
 import redisService from './redis.service';
 import fileSystemService from './filesystem.service';
+import { WatcherManager, type ISeederFunction } from './watcher.service';
 
 export {
   neo4jService,
   redisService,
-  fileSystemService
+  fileSystemService,
+  WatcherManager,
+  ISeederFunction
 };
 
 /**
