@@ -6,7 +6,6 @@ import {
   neo4jService, 
   redisService, 
   fileSystemService, 
-  createGitIgnoreParser 
 } from '@carver/shared';
 
 // Import seeder modules
