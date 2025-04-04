@@ -1,7 +1,9 @@
-import '@mantine/core/styles.css';
-import './globals.css';
 import { MantineProvider, ColorSchemeScript } from '@mantine/core';
 import { theme } from '../theme';
+import { RedisProvider } from '@/lib/context/RedisContext';
+
+import '@mantine/core/styles.css';
+import './globals.css';
 
 export const metadata = {
   title: 'Carver Watcher Dashboard',
@@ -29,7 +31,9 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <MantineProvider theme={theme}>{children}</MantineProvider>
+        <MantineProvider theme={theme}>
+          <RedisProvider>{children}</RedisProvider>
+        </MantineProvider>
       </body>
     </html>
   );

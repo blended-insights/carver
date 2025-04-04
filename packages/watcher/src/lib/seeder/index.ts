@@ -44,7 +44,9 @@ export async function seedGraphForFolder(options: {
   // Resolve the root path
   const rootPath = path.resolve(root);
   const projectName = project;
-  const versionName = `v_${Date.now()}`;
+  // Add random suffix to ensure uniqueness even within the same millisecond
+  const randomSuffix = Math.floor(Math.random() * 10000);
+  const versionName = `v_${Date.now()}_${randomSuffix}`;
 
   // Validate that the directory exists
   if (!fileSystemService.directoryExists(rootPath)) {
@@ -65,7 +67,9 @@ export async function seedGraphForFolder(options: {
     await neo4jService.createVersion(versionName, projectName);
 
     // Process the file structure (directories and files)
+    logger.info(`Processing directory structure for ${rootPath}`);
     await processDirectory(rootPath, rootPath, projectName);
+    logger.info(`Finished processing directory structure`);
 
     // Get all files from disk
     const filesFromDisk = fileSystemService.getAllFilesFromDisk(rootPath);
@@ -109,8 +113,11 @@ export async function seedGraphForFolder(options: {
         projectName,
         file.relativePath
       );
-
-      if (!storedHash || storedHash !== currentHash) {
+      
+      // TEMPORARY: For debugging, force all files to be treated as changed
+      const forceReprocess = true;
+      
+      if (forceReprocess || !storedHash || storedHash !== currentHash) {
         // File is new or changed
         newOrChangedFiles.push(fileSystemService.convertToFileNode(file));
 
@@ -142,6 +149,7 @@ export async function seedGraphForFolder(options: {
     );
 
     // Process changed/new files with ts-morph
+    logger.info(`About to process ${filteredFiles.length} TypeScript/JavaScript files with ts-morph`);
     if (filteredFiles.length > 0) {
       // Initialize ts-morph project
       const project = createTsMorphProject(filteredFiles);
@@ -256,6 +264,6 @@ export async function seedGraphForFolder(options: {
       }`,
     };
   } finally {
-    await neo4jService.close();
+    // Don't close neo4jService here as it's a singleton used across requests
   }
 }

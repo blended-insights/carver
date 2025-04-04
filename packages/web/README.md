@@ -129,10 +129,10 @@ Each watcher process has its own detail page where you can:
 The dashboard integrates with the Carver Watcher API through the following endpoints:
 
 - `GET /folders`: Get a list of available folders
-- `GET /start?folder={folderPath}`: Start a new watcher process
-- `GET /kill?processId={processId}`: Stop a watcher process
-- `GET /restart?processId={processId}`: Restart a watcher process
-- `GET /status`: Get status of all active watcher processes
+- `POST /folders/:folderPath/start?project=projectName`: Start a new watcher process
+- `POST /watchers/:processId/kill`: Stop a watcher process
+- `POST /watchers/:processId/restart`: Restart a watcher process
+- `GET /watchers`: Get all active watcher processes
 
 ### Real-time Updates
 

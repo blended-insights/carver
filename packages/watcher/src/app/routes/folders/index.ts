@@ -1,4 +1,4 @@
-import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import { FastifyInstance, FastifyReply } from 'fastify';
 import logger from '@/utils/logger';
 import { fileSystemService } from '@carver/shared';
 
@@ -6,7 +6,7 @@ import { fileSystemService } from '@carver/shared';
  * Route handler for listing folders from USER_MOUNT environment variable
  */
 export default async function (fastify: FastifyInstance) {
-  fastify.get('/', async (request: FastifyRequest, reply: FastifyReply) => {
+  fastify.get('/', async (_, reply: FastifyReply) => {
     try {
       const userMount = process.env.USER_MOUNT;
       

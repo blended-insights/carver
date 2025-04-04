@@ -53,7 +53,7 @@ console.log(folders); // Array of folder paths
 
 **Function**: `startWatcher(folder: string)`  
 **Method**: GET  
-**Endpoint**: `/start?folder={folderPath}`  
+**Endpoint**: `/folders/:folderPath/start?project=project-name`  
 **Description**: Starts a new watcher process for the specified folder.
 
 **Request Parameters**:
@@ -80,8 +80,8 @@ console.log(result.processId); // The new watcher process ID
 ### Kill Watcher
 
 **Function**: `killWatcher(processId: string)`  
-**Method**: GET  
-**Endpoint**: `/kill?processId={processId}`  
+**Method**: POST  
+**Endpoint**: `/watchers/:processId/kill`  
 **Description**: Stops a running watcher process.
 
 **Request Parameters**:
@@ -106,8 +106,8 @@ await killWatcher('watcher-1743732509429-60jma8x');
 ### Restart Watcher
 
 **Function**: `restartWatcher(processId: string)`  
-**Method**: GET  
-**Endpoint**: `/restart?processId={processId}`  
+**Method**: POST  
+**Endpoint**: `/watchers/:processId/restart`  
 **Description**: Restarts a watcher process.
 
 **Request Parameters**:
@@ -133,14 +133,14 @@ await restartWatcher('watcher-1743732509429-60jma8x');
 
 **Function**: `fetchWatcherStatus()`  
 **Method**: GET  
-**Endpoint**: `/status`  
+**Endpoint**: `/watchers`  
 **Description**: Gets the status of all active watcher processes.
 
 **Response Format**:
 ```json
 {
   "success": true,
-  "activeWatchers": [
+  "watchers": [
     {
       "processId": "watcher-1743732509429-60jma8x",
       "folderPath": "/path/to/folder1",

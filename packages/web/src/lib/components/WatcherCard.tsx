@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, Group, Badge, Text, Button, ActionIcon, Stack, Title } from '@mantine/core';
 import { IconFolder, IconRefresh, IconX, IconEye } from '@tabler/icons-react';
 import Link from 'next/link';
@@ -15,6 +15,11 @@ interface WatcherCardProps {
 export function WatcherCard({ processId, folderPath, status = 'running', onAction }: WatcherCardProps) {
   const [isLoading, setIsLoading] = React.useState(false);
   const [currentStatus, setCurrentStatus] = React.useState(status);
+  
+  // Update local status when prop changes
+  useEffect(() => {
+    setCurrentStatus(status);
+  }, [status]);
   
   // Get folder name from path safely
   const getFolderName = (path: string): string => {

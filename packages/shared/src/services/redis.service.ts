@@ -1,14 +1,6 @@
 import { Redis } from 'ioredis';
 import { IRedisService } from '../interfaces/services.interface';
-
-// We need to create a logger service in the shared package
-// For now, we'll use a simple console logger
-const logger = {
-  info: (message: string, ...args: any[]) => console.info(message, ...args),
-  warn: (message: string, ...args: any[]) => console.warn(message, ...args),
-  error: (message: string, ...args: any[]) => console.error(message, ...args),
-  debug: (message: string, ...args: any[]) => console.debug(message, ...args),
-};
+import logger from 'src/utils/logger';
 
 /**
  * Service to handle all Redis operations

@@ -31,7 +31,7 @@ Returns a list of available folders from the `USER_MOUNT` environment variable.
 ### Start Watcher
 
 ```
-GET /start?folder=/path/to/folder&project=project-name
+POST /folders/:folderPath/start?project=project-name
 ```
 
 Starts a new file watcher process for the specified folder. The `project` parameter is optional and will be derived from the folder path if not provided.
@@ -39,7 +39,7 @@ Starts a new file watcher process for the specified folder. The `project` parame
 ### Restart Watcher
 
 ```
-GET /restart?processId=watcher-id
+POST /watchers/:processId/restart
 ```
 
 Restarts an existing file watcher process by its process ID.
@@ -47,18 +47,26 @@ Restarts an existing file watcher process by its process ID.
 ### Kill Watcher
 
 ```
-GET /kill?processId=watcher-id
+POST /watchers/:processId/kill
 ```
 
 Stops and removes a file watcher process by its process ID.
 
-### Status
+### Watchers
 
 ```
-GET /status
+GET /watchers
 ```
 
 Returns details of all active watcher processes including their process IDs, folder paths, and project names.
+
+### Get Specific Watcher
+
+```
+GET /watchers/{processId}
+```
+
+Returns details about a specific watcher process by its process ID. If the watcher doesn't exist, returns a 404 error.
 
 ## Redis Events
 

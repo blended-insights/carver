@@ -1,4 +1,3 @@
-import * as neo4j from 'neo4j-driver';
 import { Redis } from 'ioredis';
 
 // These types were originally imported from '@/lib/seeder/types'
@@ -51,7 +50,6 @@ export interface ExportNode {
  * Interface for Neo4j Service
  */
 export interface INeo4jService {
-  getSession(): neo4j.Session;
   close(): Promise<void>;
   createConstraintsAndIndexes(): Promise<void>;
   createOrGetProject(projectName: string, rootPath: string): Promise<void>;
@@ -88,19 +86,15 @@ export interface INeo4jService {
     filePath: string,
     functionCalls: { caller: string; callee: string }[]
   ): Promise<void>;
-
-  // File processing methods
   createDirectoryNode(
     dirPath: string,
     dirName: string,
     projectName: string
   ): Promise<void>;
-
   createDirectoryRelationship(
     parentPath: string,
     childPath: string
   ): Promise<void>;
-
   createFileNode(
     filePath: string,
     fileName: string,
@@ -108,9 +102,7 @@ export interface INeo4jService {
     dirPath: string,
     projectName: string
   ): Promise<void>;
-
   getLatestVersionName(projectName: string): Promise<string | null>;
-
   getAllFiles(): Promise<{ path: string; name: string; extension: string }[]>;
 }
 

@@ -2,7 +2,7 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import watcherManager from '@/lib/watcher';
 import logger from '@/utils/logger';
 
-const queryStringSchema = {
+const paramsSchema = {
   type: 'object',
   required: ['processId'],
   properties: {
@@ -35,23 +35,23 @@ const responseSchema = {
 };
 
 /**
- * Route handler for killing a file watcher process
+ * Route handler for restarting a file watcher process
  */
 export default async function (fastify: FastifyInstance) {
-  fastify.get('/', {
+  fastify.post('/:processId/restart', {
     schema: {
-      querystring: queryStringSchema,
+      params: paramsSchema,
       response: responseSchema
     }
   }, async (request: FastifyRequest<{
-    Querystring: {
+    Params: {
       processId: string;
     }
   }>, reply: FastifyReply) => {
     try {
-      const { processId } = request.query;
+      const { processId } = request.params;
       
-      logger.info(`Killing watcher with process ID: ${processId}`);
+      logger.info(`Restarting watcher with process ID: ${processId}`);
       
       // Check if the process ID exists
       if (!watcherManager.getActiveWatcherIds().includes(processId)) {
@@ -61,25 +61,25 @@ export default async function (fastify: FastifyInstance) {
         });
       }
       
-      // Kill the file watcher
-      const killed = await watcherManager.killWatcher(processId);
+      // Restart the file watcher
+      const restarted = await watcherManager.restartWatcher(processId);
       
-      if (killed) {
+      if (restarted) {
         return reply.code(200).send({
           success: true,
-          message: `Killed file watcher with process ID: ${processId}`
+          message: `Restarted file watcher with process ID: ${processId}`
         });
       } else {
         return reply.code(400).send({
           success: false,
-          message: `Failed to kill watcher: Process ID ${processId} not found`
+          message: `Failed to restart watcher: Process ID ${processId} not found`
         });
       }
     } catch (error) {
-      logger.error('Error killing watcher:', error);
+      logger.error('Error restarting watcher:', error);
       return reply.code(500).send({
         success: false,
-        message: `Error killing watcher: ${error instanceof Error ? error.message : String(error)}`
+        message: `Error restarting watcher: ${error instanceof Error ? error.message : String(error)}`
       });
     }
   });

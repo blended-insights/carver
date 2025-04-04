@@ -15,34 +15,45 @@ export async function processDirectory(
   projectRoot: string,
   projectName: string,
 ): Promise<void> {
+  logger.debug(`Processing directory: ${dirPath}`);
   const relativePath = path.relative(projectRoot, dirPath);
   const dirName = path.basename(dirPath);
 
   // Skip node_modules, dist, and hidden directories
   if (dirPath.includes("node_modules") || dirPath.includes("dist") || dirName.startsWith(".")) {
+    logger.debug(`Skipping directory: ${dirPath}`);
     return;
   }
 
-  // Create Directory node if there's a relative path
-  if (relativePath) {
-    // Create project if it doesn't exist
-    await neo4jService.createOrGetProject(projectName, projectRoot);
+  // Create the project node
+  await neo4jService.createOrGetProject(projectName, projectRoot);
+  
+  // Create Directory node if there's a relative path or it's the root
+  logger.debug(`Relative path: ${relativePath}, dirName: ${dirName}`);
+  if (relativePath || dirPath === projectRoot) {
+    // If it's the root directory, use a . as the relative path
+    const nodePath = relativePath || '.';
+    logger.debug(`Creating directory node with path: ${nodePath}`);
     
     // Create directory node
     await neo4jService.createDirectoryNode(
-      relativePath,
+      nodePath,
       dirName,
       projectName
     );
     
-    // Create parent-child directory relationship
-    const parentPath = path.dirname(relativePath);
-    if (parentPath !== ".") {
+    // Only create parent-child relationship for non-root dirs
+    if (nodePath !== '.') {
+      const parentPath = path.dirname(relativePath);
+      if (parentPath !== ".") {
+      logger.debug(`Creating parent-child relationship: ${parentPath} -> ${nodePath}`);
       await neo4jService.createDirectoryRelationship(
         parentPath,
-        relativePath
+        nodePath
       );
+      }
     }
+
     
     // Process children
     const entries = fs.readdirSync(dirPath, { withFileTypes: true });
@@ -72,10 +83,16 @@ async function processFile(
   projectRoot: string,
   projectName: string
 ): Promise<void> {
+  logger.debug(`Processing file: ${filePath}`);
   const fileName = path.basename(filePath);
   const fileExtension = path.extname(fileName);
   const fileRelativePath = path.relative(projectRoot, filePath);
-  const dirRelativePath = path.dirname(fileRelativePath);
+  let dirRelativePath = path.dirname(fileRelativePath);
+  // If dirRelativePath is empty (file at root), set to .
+  if (!dirRelativePath || dirRelativePath === '') {
+    dirRelativePath = '.';
+  }
+  logger.debug(`File directory path: ${dirRelativePath}`);
   
   // Create file node
   await neo4jService.createFileNode(

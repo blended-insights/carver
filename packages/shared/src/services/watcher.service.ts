@@ -54,14 +54,8 @@ export class WatcherManager implements IWatcherManager {
     // Load gitignore patterns if available
     const hasGitIgnore = gitIgnoreParser.loadFromFile(gitIgnorePath);
     
-    if (hasGitIgnore) {
-      logger.info(`Loaded gitignore patterns from ${gitIgnorePath} for file watcher`);
-      return gitIgnoreParser.toChokidarIgnorePatterns();
-    } 
-    
-    // Default ignore patterns if no .gitignore file exists
-    logger.info(`No gitignore file found at ${gitIgnorePath}, using default exclusions for file watcher`);
-    return [
+    // Always include these patterns regardless of gitignore
+    const alwaysIgnore = [
       '**/node_modules/**',
       '**/dist/**',
       '**/.git/**',
@@ -69,7 +63,19 @@ export class WatcherManager implements IWatcherManager {
       '**/logs/**',
       '**/.next/**',
       '**/build/**',
+      '**/.nx/workspace-data/**',
+      '**/jest-*.hash', // Ignore Jest hash files
     ];
+    
+    if (hasGitIgnore) {
+      logger.info(`Loaded gitignore patterns from ${gitIgnorePath} for file watcher`);
+      const patterns = gitIgnoreParser.toChokidarIgnorePatterns();
+      return [...new Set([...alwaysIgnore, ...patterns])];
+    } 
+    
+    // Default ignore patterns if no .gitignore file exists
+    logger.info(`No gitignore file found at ${gitIgnorePath}, using default exclusions for file watcher`);
+    return alwaysIgnore;
   }
 
   /**
@@ -397,12 +403,14 @@ export class WatcherManager implements IWatcherManager {
     processId: string;
     folderPath: string;
     projectName: string;
+    status: 'running';
   }[] {
     return Array.from(this.watchers.values()).map(
       ({ processId, folderPath, projectName }) => ({
         processId,
         folderPath,
         projectName,
+        status: 'running',
       })
     );
   }

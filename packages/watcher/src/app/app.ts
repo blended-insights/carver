@@ -10,10 +10,11 @@ import sensiblePlugin from './plugins/sensible';
 // Import routes directly for bundled mode
 import rootRoute from './routes/root';
 import folderRoute from './routes/folders/index';
-import killRoute from './routes/kill/index';
-import restartRoute from './routes/restart/index';
-import startRoute from './routes/start/index';
-import statusRoute from './routes/status/index';
+import startRoute from './routes/folders/:folderPath/start/index';
+import watchersRoute from './routes/watchers/index';
+import watcherRoute from './routes/watchers/:processId/index';
+import killRoute from './routes/watchers/:processId/kill/index';
+import restartRoute from './routes/watchers/:processId/restart/index';
 
 /* eslint-disable-next-line */
 export interface AppOptions {}
@@ -36,10 +37,11 @@ export async function app(fastify: FastifyInstance, opts: AppOptions) {
     // Register routes
     fastify.register(rootRoute);
     fastify.register(folderRoute, { prefix: '/folders' });
-    fastify.register(killRoute, { prefix: '/kill' });
-    fastify.register(restartRoute, { prefix: '/restart' });
-    fastify.register(startRoute, { prefix: '/start' });
-    fastify.register(statusRoute, { prefix: '/status' });
+    fastify.register(startRoute, { prefix: '/folders' });
+    fastify.register(watchersRoute, { prefix: '/watchers' });
+    fastify.register(watcherRoute, { prefix: '/watchers' });
+    fastify.register(restartRoute, { prefix: 'watchers' });
+    fastify.register(killRoute, { prefix: '/watchers' });
   } else {
     // In non-bundled mode, use autoload
     fastify.register(AutoLoad, {

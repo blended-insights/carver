@@ -82,7 +82,7 @@ export const DIRECTORY_QUERIES = {
 // Entity Operations
 export const ENTITY_QUERIES = {
   LINK_ENTITY_TO_VERSION: `
-    MATCH (entity:${/* This is a template placeholder */0} {name: $name, filePath: $filePath})
+    MATCH (entity:$ENTITY_TYPE {name: $name, filePath: $filePath})
     MATCH (v:Version {name: $versionName})
     MERGE (entity)-[:APPEARED_IN]->(v)
   `,

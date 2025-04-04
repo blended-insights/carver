@@ -112,16 +112,19 @@ export class GitIgnoreParser {
    * Get default directory exclusions
    * @returns Array of test functions for default directory exclusions
    */
-  getDefaultDirExclusions(): ((name: string) => boolean)[] {
+  getDefaultDirExclusions(): ((path: string) => boolean)[] {
     return [
-      (name: string) => name.startsWith("."),
-      (name: string) => name === "node_modules",
-      (name: string) => name === "coverage",
-      (name: string) => name === "dist",
-      (name: string) => name === "docs",
-      (name: string) => name === "logs",
-      (name: string) => name === "build",
-      (name: string) => name === ".next"
+      (path: string) => {
+        const name = path.split('/').pop() || '';
+        return name.startsWith(".") && name !== ".nx";
+      },
+      (path: string) => path.includes("/node_modules/") || path.endsWith("/node_modules"),
+      (path: string) => path.includes("/coverage/") || path.endsWith("/coverage"),
+      (path: string) => path.includes("/dist/") || path.endsWith("/dist"),
+      (path: string) => path.includes("/docs/") || path.endsWith("/docs"),
+      (path: string) => path.includes("/logs/") || path.endsWith("/logs"),
+      (path: string) => path.includes("/build/") || path.endsWith("/build"),
+      (path: string) => path.includes("/.next/") || path.endsWith("/.next"),
     ];
   }
 
@@ -129,13 +132,20 @@ export class GitIgnoreParser {
    * Get default file exclusions
    * @returns Array of test functions for default file exclusions
    */
-  getDefaultFileExclusions(): ((name: string) => boolean)[] {
+  getDefaultFileExclusions(): ((path: string) => boolean)[] {
     return [
-      (name: string) => name === ".DS_Store",
-      (name: string) => name.startsWith(".env"),
-      (name: string) => name.endsWith(".log"),
-      (name: string) => name.endsWith(".pem"),
-      (name: string) => name.endsWith(".tsbuildinfo")
+      (path: string) => {
+        const name = path.split('/').pop() || '';
+        return name === ".DS_Store";
+      },
+      (path: string) => {
+        const name = path.split('/').pop() || '';
+        return name.startsWith(".env");
+      },
+      (path: string) => path.endsWith(".log"),
+      (path: string) => path.endsWith(".pem"),
+      (path: string) => path.endsWith(".tsbuildinfo"),
+      (path: string) => path.endsWith(".hash"),
     ];
   }
 
@@ -161,15 +171,37 @@ export class GitIgnoreParser {
       .map(p => {
         let pattern = p.pattern;
         
-        // Add ** prefix and suffix for directories
-        if (pattern.endsWith('/')) {
-          pattern = `**/${pattern}**`;
+        // Handle patterns with path separators specifically
+        if (pattern.includes('/')) {
+          // If it already has path separators, make sure it has ** at start and end if needed
+          if (!pattern.startsWith('/')) {
+            pattern = `**/${pattern}`;
+          } else {
+            // Remove leading slash since chokidar is relative to the root
+            pattern = pattern.substring(1);
+          }
+          
+          // Add trailing ** if it ends with a slash (for directories)
+          if (pattern.endsWith('/')) {
+            pattern = `${pattern}**`;
+          } else if (!pattern.includes('*')) {
+            // For specific paths without wildcards, add ** to match files within
+            pattern = `${pattern}/**`;
+          }
         } else {
+          // Simple file/dir name patterns (no path separators)
           pattern = `**/${pattern}`;
+          
+          // Add trailing ** for directories
+          if (pattern.endsWith('/')) {
+            pattern = `${pattern}**`;
+          }
         }
         
         return pattern;
       });
+    
+    logger.info(`Converted gitignore patterns to chokidar patterns: ${[...standardIgnores, ...gitignorePatterns].join(', ')}`);
     
     return [...standardIgnores, ...gitignorePatterns];
   }

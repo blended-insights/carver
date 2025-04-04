@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { WatcherStatusNotification, FileChangeNotification } from '../utils/redis';
+import { WatcherStatusNotification, FileChangeNotification } from '@/types/redis';
 
 interface UseEventsProps {
   processId?: string;
+  filterByProcessId?: boolean; // New flag to determine if we should filter in this component
 }
 
 interface UseEventsResult {
@@ -12,7 +13,7 @@ interface UseEventsResult {
   error: string | null;
 }
 
-export function useEvents({ processId }: UseEventsProps = {}): UseEventsResult {
+export function useEvents({ processId, filterByProcessId = true }: UseEventsProps = {}): UseEventsResult {
   const [statusNotifications, setStatusNotifications] = useState<WatcherStatusNotification[]>([]);
   const [fileChanges, setFileChanges] = useState<FileChangeNotification[]>([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -41,15 +42,15 @@ export function useEvents({ processId }: UseEventsProps = {}): UseEventsResult {
             if (channel === 'watcher.status') {
               const statusData = data as WatcherStatusNotification;
               
-              // If processId is provided, only add notifications for that process
-              if (!processId || statusData.processId === processId) {
+              // If filtering is enabled and processId is provided, only add notifications for that process
+              if (!filterByProcessId || !processId || statusData.processId === processId) {
                 setStatusNotifications(prev => [statusData, ...prev]);
               }
             } else if (channel === 'file.change') {
               const fileData = data as FileChangeNotification;
               
-              // If processId is provided, only add notifications for that process
-              if (!processId || fileData.processId === processId) {
+              // If filtering is enabled and processId is provided, only add notifications for that process
+              if (!filterByProcessId || !processId || fileData.processId === processId) {
                 setFileChanges(prev => [fileData, ...prev]);
               }
             }
@@ -86,7 +87,7 @@ export function useEvents({ processId }: UseEventsProps = {}): UseEventsResult {
         eventSource.close();
       }
     };
-  }, [processId]);
+  }, [processId, filterByProcessId]);
   
   return {
     statusNotifications,

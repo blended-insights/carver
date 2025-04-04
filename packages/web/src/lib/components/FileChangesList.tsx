@@ -1,7 +1,7 @@
 import React from 'react';
-import { Timeline, Text, Badge, Group, Paper, ActionIcon, Stack, Title } from '@mantine/core';
+import { Timeline, Text, Badge, Group, Paper } from '@mantine/core';
 import { IconFile, IconEdit, IconTrash, IconPlus, IconClock } from '@tabler/icons-react';
-import { FileChangeNotification } from '../utils/redis';
+import type { FileChangeNotification } from '@/types/redis';
 
 interface FileChangesListProps {
   changes: FileChangeNotification[];
@@ -22,7 +22,7 @@ export function FileChangesList({ changes, maxItems = 50, processId }: FileChang
   if (recentChanges.length === 0) {
     return (
       <Paper p="md" withBorder>
-        <Text align="center" c="dimmed">No file changes recorded yet</Text>
+        <Text ta="center" c="dimmed">No file changes recorded yet</Text>
       </Paper>
     );
   }
@@ -37,9 +37,9 @@ export function FileChangesList({ changes, maxItems = 50, processId }: FileChang
         // Get the file name from the full path
         const fileName = change.filePath.split('/').pop() || change.filePath;
         
-        // Determine icon and color based on change type
-        let icon;
+        // Determine color based on change type
         let color;
+        let icon;
         
         if (change.eventType === 'add') {
           icon = <IconPlus size={14} />;
@@ -59,7 +59,7 @@ export function FileChangesList({ changes, maxItems = 50, processId }: FileChang
             title={
               <Group gap="xs">
                 <Text className="code-filename">{fileName}</Text>
-                <Badge color={color} size="sm" variant="light">
+                <Badge color={color} size="sm" variant="light" leftSection={icon}>
                   {change.eventType}
                 </Badge>
               </Group>

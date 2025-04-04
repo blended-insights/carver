@@ -39,7 +39,7 @@ export class Neo4jService implements INeo4jService {
   /**
    * Get a new Neo4j session
    */
-  getSession(): neo4j.Session {
+  private getSession(): neo4j.Session {
     return this.driver.session();
   }
   
@@ -188,7 +188,7 @@ export class Neo4jService implements INeo4jService {
     return this.executeInSession(async (session) => {
       try {
         // Replace the template placeholder with the actual entity type
-        const query = ENTITY_QUERIES.LINK_ENTITY_TO_VERSION.replace("${0}", entityType);
+        const query = ENTITY_QUERIES.LINK_ENTITY_TO_VERSION.replace("$ENTITY_TYPE", entityType);
         
         await session.run(
           query,
@@ -518,12 +518,14 @@ export class Neo4jService implements INeo4jService {
     dirName: string,
     projectName: string
   ): Promise<void> {
+    logger.debug(`Creating directory node: path=${dirPath}, name=${dirName}, project=${projectName}`);
     return this.executeInSession(async (session) => {
       try {
         await session.run(
           DIRECTORY_QUERIES.CREATE_DIRECTORY_NODE,
           { path: dirPath, name: dirName, projectName }
         );
+        logger.debug(`Successfully created directory node for: ${dirPath}`);
       } catch (error) {
         logger.error(`Error creating directory node for ${dirPath}:`, error);
         throw error;
@@ -568,6 +570,7 @@ export class Neo4jService implements INeo4jService {
     dirPath: string,
     projectName: string
   ): Promise<void> {
+    logger.debug(`Creating file node: path=${filePath}, name=${fileName}, extension=${fileExtension}, dirPath=${dirPath}, project=${projectName}`);
     return this.executeInSession(async (session) => {
       try {
         await session.run(
@@ -580,6 +583,7 @@ export class Neo4jService implements INeo4jService {
             projectName,
           }
         );
+        logger.debug(`Successfully created file node for: ${filePath}`);
       } catch (error) {
         logger.error(`Error creating file node for ${filePath}:`, error);
         throw error;
