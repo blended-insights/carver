@@ -5,6 +5,7 @@ import { Title, Card, Text, Group, Button, Stack, Alert, Paper, SimpleGrid, Load
 import { IconFolder, IconAlertCircle, IconCheck } from '@tabler/icons-react';
 import { Layout } from '../../components/Layout';
 import { fetchAvailableFolders, startWatcher, fetchWatcherStatus, Folder, WatcherProcess, StartWatcherResponse } from '../../utils/api';
+import { useEvents } from '../../hooks/useEvents';
 import logger from '../../utils/logger';
 
 export default function FoldersPage() {
@@ -15,13 +16,16 @@ export default function FoldersPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   
-  // Fetch available folders and active watchers
+  // Use the events hook to get real-time updates for watchers
+  const { statusNotifications, error: eventsError } = useEvents();
+  
+  // Fetch available folders and initial active watchers
   const fetchData = async () => {
     try {
       setIsLoading(true);
       setError(null);
       
-      // Fetch folders and watchers separately for better error handling
+      // Fetch folders
       try {
         const foldersData = await fetchAvailableFolders();
         setFolders(foldersData);
@@ -31,13 +35,16 @@ export default function FoldersPage() {
         setError('Failed to fetch available folders. Please try again.');
       }
       
+      // Get initial watcher status - only needed on first load
+      // After this, we'll rely on Redis events for updates
       try {
-        const watchersData = await fetchWatcherStatus();
-        setActiveWatchers(watchersData);
+        if (activeWatchers.length === 0) {
+          const watchersData = await fetchWatcherStatus();
+          setActiveWatchers(watchersData);
+        }
       } catch (watcherErr) {
         logger.error('Error fetching watchers:', watcherErr);
-        setActiveWatchers([]);
-        // Don't set error if just the watchers fail but folders succeeded
+        // We'll still receive updates from the event system, so no need to show an error
       }
     } finally {
       setIsLoading(false);
@@ -53,8 +60,8 @@ export default function FoldersPage() {
       
       const response = await startWatcher(folderPath);
       
-      // Refresh the watchers list
-      await fetchData();
+      // No need to refetch watchers - we'll get updates via Redis events
+      // The StatusNotification will be published when the watcher starts
       
       setSuccess(`Successfully started watcher for ${folderPath}`);
     } catch (error) {
@@ -88,9 +95,54 @@ export default function FoldersPage() {
     }
   };
   
+  // Update active watchers based on status notifications
+  useEffect(() => {
+    if (statusNotifications.length > 0) {
+      // Get the latest notification
+      const latestNotification = statusNotifications[0];
+      
+      // Update corresponding watcher in the state
+      setActiveWatchers(current => {
+        // Find existing watcher with the same processId
+        const existingIndex = current.findIndex(
+          w => w.processId === latestNotification.processId
+        );
+        
+        // Create a new array to maintain immutability
+        const newWatchers = [...current];
+        
+        if (existingIndex >= 0) {
+          // Update existing watcher
+          if (latestNotification.status === 'shutdown') {
+            // Remove the watcher if it was shut down
+            newWatchers.splice(existingIndex, 1);
+          } else {
+            // Update the status
+            newWatchers[existingIndex] = {
+              ...newWatchers[existingIndex],
+              status: latestNotification.status === 'started' ? 'running' : latestNotification.status
+            };
+          }
+        } else if (latestNotification.status === 'started' || latestNotification.status === 'running') {
+          // Add new watcher if it doesn't exist yet
+          newWatchers.push({
+            processId: latestNotification.processId,
+            folderPath: latestNotification.message.includes('watching') 
+              ? latestNotification.message.split('watching ')[1]?.split(' ')[0] || ''
+              : '',
+            status: 'running'
+          });
+        }
+        
+        return newWatchers;
+      });
+    }
+  }, [statusNotifications]);
+  
   // Fetch data on initial load
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   return (
@@ -107,9 +159,10 @@ export default function FoldersPage() {
           </Button>
         </Group>
         
-        {error && (
+        {(error || eventsError) && (
           <Alert color="red" title="Error" icon={<IconAlertCircle />}>
-            {error}
+            {error || eventsError}
+            {eventsError && ' Real-time updates are not available.'}
           </Alert>
         )}
         
