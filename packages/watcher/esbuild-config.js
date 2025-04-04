@@ -1,28 +1,22 @@
-
-const { resolve } = require('path');
+const path = require('path');
 
 /**
- * This module exports plugins for esbuild to handle TypeScript path aliases
- * properly during the build process and to include necessary dependencies.
+ * ESBuild plugin to handle TypeScript path aliases
  */
 module.exports = {
-  plugins: [
-    {
-      name: 'alias-paths',
-      setup(build) {
-        // Handle the @ alias to point to the src directory
-        build.onResolve({ filter: /^@\/.*/ }, async (args) => {
-          const resolvedPath = args.path.replace(
-            /^@\//,
-            `${resolve(__dirname, 'src')}/`
-          );
-          
-          return {
-            path: resolvedPath,
-            external: false,
-          };
-        });
-      },
-    },
-  ],
+  name: 'alias-paths',
+  setup(build) {
+    // Handle the @ alias to point to the src directory
+    build.onResolve({ filter: /^@\/.*/ }, args => {
+      const resolvedPath = args.path.replace(
+        /^@\//,
+        path.resolve(__dirname, 'src') + '/'
+      );
+      
+      return {
+        path: resolvedPath,
+        external: false,
+      };
+    });
+  }
 };

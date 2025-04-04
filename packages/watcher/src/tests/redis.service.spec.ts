@@ -24,7 +24,7 @@ describe('RedisService', () => {
     } as unknown as jest.Mocked<Redis>;
     
     // Mock Redis constructor
-    (Redis as jest.Mock).mockImplementation(() => mockRedis);
+    (Redis as unknown as jest.Mock).mockImplementation(() => mockRedis);
     
     // Create RedisService instance
     redisService = new RedisService('redis://localhost:6379');

@@ -13,16 +13,18 @@
         "platform": "node",
         "outputPath": "packages/watcher/dist",
         "format": ["cjs"],
-        "bundle": false,
+        "bundle": true,
+        "external": [],
         "main": "packages/watcher/src/main.ts",
         "tsConfig": "packages/watcher/tsconfig.app.json",
-        "assets": ["packages/watcher/src/assets"],
+        "assets": [
+          "packages/watcher/src/assets"
+        ],
         "esbuildOptions": {
           "sourcemap": true,
           "outExtension": {
             ".js": ".js"
-          },
-          "plugins": ["./packages/watcher/esbuild-config.js"]
+          }
         }
       },
       "configurations": {
@@ -33,8 +35,7 @@
             "sourcemap": false,
             "outExtension": {
               ".js": ".js"
-            },
-            "plugins": ["./packages/watcher/esbuild-config.js"]
+            }
           }
         }
       }

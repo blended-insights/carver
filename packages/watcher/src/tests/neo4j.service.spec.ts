@@ -205,12 +205,12 @@ describe('Neo4jService', () => {
   describe('handleDeletedEntities', () => {
     it('should skip handling if file does not exist', async () => {
       const filePath = 'path/to/file.ts';
-      const currentFunctions = [];
-      const currentClasses = [];
+      const currentFunctions:[] = [];
+      const currentClasses:[] = [];
       const versionName = 'v_123456789';
       
       // Mock empty result (file not found)
-      mockResult.records = [];
+      (await mockResult).records = [];
       mockSession.run.mockResolvedValueOnce(mockResult);
       
       await neo4jService.handleDeletedEntities(mockSession, filePath, currentFunctions, currentClasses, versionName);
