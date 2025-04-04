@@ -55,13 +55,13 @@ export async function seedGraphForFolder(options: {
     await neo4jService.createConstraintsAndIndexes();
 
     // Create or get Project node
-    await neo4jService.createOrGetProject( projectName, rootPath);
+    await neo4jService.createOrGetProject(projectName, rootPath);
 
     // Create new Version node
-    await neo4jService.createVersion( versionName, projectName);
+    await neo4jService.createVersion(versionName, projectName);
 
     // Process the file structure (directories and files)
-    await processDirectory( rootPath, rootPath, projectName);
+    await processDirectory(rootPath, rootPath, projectName);
 
     // Get all files from disk
     const filesFromDisk = fileSystemService.getAllFilesFromDisk(rootPath);
@@ -87,7 +87,7 @@ export async function seedGraphForFolder(options: {
       logger.info(`Marking file as deleted: ${filePath}`);
 
       // Mark file as deleted in current version
-      await neo4jService.markFileAsDeleted( filePath, versionName);
+      await neo4jService.markFileAsDeleted(filePath, versionName);
 
       // Remove from Redis
       await redisService.deleteFileData(projectName, filePath);
@@ -160,7 +160,6 @@ export async function seedGraphForFolder(options: {
 
           // First, handle deleted entities in the file (if the file already existed)
           await neo4jService.handleDeletedEntities(
-            
             file.path,
             functions,
             classes,
@@ -169,7 +168,6 @@ export async function seedGraphForFolder(options: {
 
           // Process entity movements (if they come from other files)
           await neo4jService.processEntityMovements(
-            
             file.path,
             functions,
             classes,
@@ -178,16 +176,14 @@ export async function seedGraphForFolder(options: {
 
           // Create file's relationship to current version
           await neo4jService.createFileVersionRelationship(
-            
             file.path,
             versionName
           );
 
           // Create entities in Neo4j
           for (const func of functions) {
-            await neo4jService.createFunctionNode( func);
+            await neo4jService.createFunctionNode(func);
             await neo4jService.linkEntityToVersion(
-              
               'Function',
               func.name,
               func.filePath,
@@ -196,9 +192,8 @@ export async function seedGraphForFolder(options: {
           }
 
           for (const cls of classes) {
-            await neo4jService.createClassNode( cls);
+            await neo4jService.createClassNode(cls);
             await neo4jService.linkEntityToVersion(
-              
               'Class',
               cls.name,
               cls.filePath,
@@ -207,9 +202,8 @@ export async function seedGraphForFolder(options: {
           }
 
           for (const variable of variables) {
-            await neo4jService.createVariableNode( variable);
+            await neo4jService.createVariableNode(variable);
             await neo4jService.linkEntityToVersion(
-              
               'Variable',
               variable.name,
               variable.filePath,
@@ -218,18 +212,17 @@ export async function seedGraphForFolder(options: {
           }
 
           for (const importNode of imports) {
-            await neo4jService.createImportNode( importNode);
+            await neo4jService.createImportNode(importNode);
           }
 
           for (const exportNode of exports) {
-            await neo4jService.createExportNode( exportNode);
+            await neo4jService.createExportNode(exportNode);
           }
 
           // Process function calls
           const functionCalls = analyzeFunctionCalls(functions, sourceFile);
           if (functionCalls.length > 0) {
             await neo4jService.createFunctionCallRelationships(
-              
               file.path,
               functionCalls
             );

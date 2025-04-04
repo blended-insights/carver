@@ -8,6 +8,16 @@ import {
   ExportNode 
 } from '../interfaces/services.interface';
 import logger from 'src/utils/logger';
+import {
+  CONSTRAINTS_AND_INDEXES,
+  PROJECT_QUERIES,
+  FILE_QUERIES,
+  DIRECTORY_QUERIES,
+  ENTITY_QUERIES,
+  ENTITY_DELETION_QUERIES,
+  ENTITY_MOVEMENT_QUERIES,
+  FUNCTION_CALL_QUERIES
+} from '../constants/neo4j-queries';
 
 /**
  * Service to handle all Neo4j database operations
@@ -59,24 +69,12 @@ export class Neo4jService implements INeo4jService {
   async createConstraintsAndIndexes(): Promise<void> {
     return this.executeInSession(async (session) => {
       try {
-        await session.run(
-          "CREATE CONSTRAINT file_path IF NOT EXISTS FOR (f:File) REQUIRE f.path IS UNIQUE",
-        );
-        await session.run(
-          "CREATE CONSTRAINT directory_path IF NOT EXISTS FOR (d:Directory) REQUIRE d.path IS UNIQUE",
-        );
-        await session.run(
-          "CREATE CONSTRAINT project_name IF NOT EXISTS FOR (p:Project) REQUIRE p.name IS UNIQUE",
-        );
-        await session.run(
-          "CREATE CONSTRAINT version_name IF NOT EXISTS FOR (v:Version) REQUIRE v.name IS UNIQUE",
-        );
-        await session.run(
-          "CREATE INDEX function_index IF NOT EXISTS FOR (f:Function) ON (f.name, f.filePath)",
-        );
-        await session.run(
-          "CREATE INDEX class_index IF NOT EXISTS FOR (c:Class) ON (c.name, c.filePath)",
-        );
+        await session.run(CONSTRAINTS_AND_INDEXES.FILE_PATH_CONSTRAINT);
+        await session.run(CONSTRAINTS_AND_INDEXES.DIRECTORY_PATH_CONSTRAINT);
+        await session.run(CONSTRAINTS_AND_INDEXES.PROJECT_NAME_CONSTRAINT);
+        await session.run(CONSTRAINTS_AND_INDEXES.VERSION_NAME_CONSTRAINT);
+        await session.run(CONSTRAINTS_AND_INDEXES.FUNCTION_INDEX);
+        await session.run(CONSTRAINTS_AND_INDEXES.CLASS_INDEX);
         
         logger.info("Created constraints and indexes");
       } catch (error) {
@@ -98,12 +96,7 @@ export class Neo4jService implements INeo4jService {
     return this.executeInSession(async (session) => {
       try {
         await session.run(
-          `
-          MERGE (p:Project {name: $name})
-          ON CREATE SET p.rootPath = $rootPath, p.createdAt = datetime()
-          ON MATCH SET p.rootPath = $rootPath, p.updatedAt = datetime()
-          RETURN p
-          `,
+          PROJECT_QUERIES.CREATE_OR_GET_PROJECT,
           { name: projectName, rootPath: rootPath },
         );
       } catch (error) {
@@ -125,12 +118,7 @@ export class Neo4jService implements INeo4jService {
     return this.executeInSession(async (session) => {
       try {
         await session.run(
-          `
-          CREATE (v:Version {name: $versionName, timestamp: datetime()})
-          WITH v
-          MATCH (p:Project {name: $projectName})
-          MERGE (p)-[:HAS_VERSION]->(v)
-          `,
+          PROJECT_QUERIES.CREATE_VERSION,
           { versionName, projectName },
         );
       } catch (error) {
@@ -152,11 +140,7 @@ export class Neo4jService implements INeo4jService {
     return this.executeInSession(async (session) => {
       try {
         await session.run(
-          `
-          MATCH (f:File {path: $filePath})
-          MATCH (v:Version {name: $versionName})
-          MERGE (f)-[:DELETED_IN]->(v)
-          `,
+          FILE_QUERIES.MARK_FILE_AS_DELETED,
           { filePath, versionName },
         );
       } catch (error) {
@@ -178,11 +162,7 @@ export class Neo4jService implements INeo4jService {
     return this.executeInSession(async (session) => {
       try {
         await session.run(
-          `
-          MATCH (f:File {path: $filePath})
-          MATCH (v:Version {name: $versionName})
-          MERGE (f)-[:APPEARED_IN]->(v)
-          `,
+          FILE_QUERIES.CREATE_FILE_VERSION_RELATIONSHIP,
           { filePath: filePath, versionName },
         );
       } catch (error) {
@@ -207,12 +187,11 @@ export class Neo4jService implements INeo4jService {
   ): Promise<void> {
     return this.executeInSession(async (session) => {
       try {
+        // Replace the template placeholder with the actual entity type
+        const query = ENTITY_QUERIES.LINK_ENTITY_TO_VERSION.replace("${0}", entityType);
+        
         await session.run(
-          `
-          MATCH (entity:${entityType} {name: $name, filePath: $filePath})
-          MATCH (v:Version {name: $versionName})
-          MERGE (entity)-[:APPEARED_IN]->(v)
-          `,
+          query,
           {
             name,
             filePath,
@@ -243,7 +222,7 @@ export class Neo4jService implements INeo4jService {
       try {
         // Check if file already exists in database
         const fileExists = await session.run(
-          "MATCH (f:File {path: $filePath}) RETURN f", 
+          ENTITY_DELETION_QUERIES.CHECK_FILE_EXISTS, 
           { filePath }
         );
 
@@ -254,11 +233,7 @@ export class Neo4jService implements INeo4jService {
 
         // Handle deleted functions
         const previousFunctions = await session.run(
-          `
-          MATCH (f:File {path: $filePath})-[:DEFINES]->(func:Function)
-          WHERE NOT EXISTS { MATCH (func)-[:DELETED_IN]->() }
-          RETURN func.name as name
-          `,
+          ENTITY_DELETION_QUERIES.GET_PREVIOUS_FUNCTIONS,
           { filePath },
         );
 
@@ -273,22 +248,14 @@ export class Neo4jService implements INeo4jService {
           logger.debug(`Marking function as deleted: ${funcName} in ${filePath}`);
 
           await session.run(
-            `
-            MATCH (f:File {path: $filePath})-[:DEFINES]->(func:Function {name: $funcName})
-            MATCH (v:Version {name: $versionName})
-            MERGE (func)-[:DELETED_IN]->(v)
-            `,
+            ENTITY_DELETION_QUERIES.MARK_FUNCTION_DELETED,
             { filePath, funcName, versionName },
           );
         }
 
         // Handle deleted classes
         const previousClasses = await session.run(
-          `
-          MATCH (f:File {path: $filePath})-[:DEFINES]->(cls:Class)
-          WHERE NOT EXISTS { MATCH (cls)-[:DELETED_IN]->() }
-          RETURN cls.name as name
-          `,
+          ENTITY_DELETION_QUERIES.GET_PREVIOUS_CLASSES,
           { filePath },
         );
 
@@ -303,11 +270,7 @@ export class Neo4jService implements INeo4jService {
           logger.debug(`Marking class as deleted: ${className} in ${filePath}`);
 
           await session.run(
-            `
-            MATCH (f:File {path: $filePath})-[:DEFINES]->(cls:Class {name: $className})
-            MATCH (v:Version {name: $versionName})
-            MERGE (cls)-[:DELETED_IN]->(v)
-            `,
+            ENTITY_DELETION_QUERIES.MARK_CLASS_DELETED,
             { filePath, className, versionName },
           );
         }
@@ -337,16 +300,7 @@ export class Neo4jService implements INeo4jService {
         for (const func of functions) {
           // Look for deleted functions with same name and parameters from other files
           const potentialMoves = await session.run(
-            `
-            MATCH (oldFile:File)-[:DEFINES]->(func:Function {name: $funcName})
-            MATCH (func)-[:DELETED_IN]->(v:Version)
-            WHERE oldFile.path <> $filePath
-            AND func.parameters = $parameters
-            AND v.timestamp > datetime() - duration('P30D') // Within last 30 days
-            RETURN oldFile.path as oldPath, func, v.timestamp as deletedAt
-            ORDER BY deletedAt DESC
-            LIMIT 1
-            `,
+            ENTITY_MOVEMENT_QUERIES.FIND_MOVED_FUNCTION,
             {
               funcName: func.name,
               filePath: filePath,
@@ -362,14 +316,7 @@ export class Neo4jService implements INeo4jService {
 
             // Mark as moved
             await session.run(
-              `
-              MATCH (func:Function) WHERE id(func) = $funcId
-              MATCH (newFile:File {path: $newPath})
-              MATCH (v:Version {name: $versionName})
-              MERGE (func)-[:MOVED_TO {in: $versionName}]->(newFile)
-              MERGE (func)-[:APPEARED_IN]->(v)
-              REMOVE (func)-[:DELETED_IN]->(v)
-              `,
+              ENTITY_MOVEMENT_QUERIES.MARK_FUNCTION_MOVED,
               {
                 funcId: funcNode.identity,
                 newPath: filePath,
@@ -383,15 +330,7 @@ export class Neo4jService implements INeo4jService {
         for (const cls of classes) {
           // Look for deleted classes with same name from other files
           const potentialMoves = await session.run(
-            `
-            MATCH (oldFile:File)-[:DEFINES]->(cls:Class {name: $className})
-            MATCH (cls)-[:DELETED_IN]->(v:Version)
-            WHERE oldFile.path <> $filePath
-            AND v.timestamp > datetime() - duration('P30D') // Within last 30 days
-            RETURN oldFile.path as oldPath, cls, v.timestamp as deletedAt
-            ORDER BY deletedAt DESC
-            LIMIT 1
-            `,
+            ENTITY_MOVEMENT_QUERIES.FIND_MOVED_CLASS,
             {
               className: cls.name,
               filePath: filePath,
@@ -406,14 +345,7 @@ export class Neo4jService implements INeo4jService {
 
             // Mark as moved
             await session.run(
-              `
-              MATCH (cls:Class) WHERE id(cls) = $clsId
-              MATCH (newFile:File {path: $newPath})
-              MATCH (v:Version {name: $versionName})
-              MERGE (cls)-[:MOVED_TO {in: $versionName}]->(newFile)
-              MERGE (cls)-[:APPEARED_IN]->(v)
-              REMOVE (cls)-[:DELETED_IN]->(v)
-              `,
+              ENTITY_MOVEMENT_QUERIES.MARK_CLASS_MOVED,
               {
                 clsId: clsNode.identity,
                 newPath: filePath,
@@ -437,19 +369,7 @@ export class Neo4jService implements INeo4jService {
     return this.executeInSession(async (session) => {
       try {
         await session.run(
-          `
-          MATCH (f:File {path: $filePath})
-          MERGE (func:Function {name: $name, filePath: $filePath})
-          ON CREATE SET func.lineStart = $lineStart,
-                        func.lineEnd = $lineEnd,
-                        func.parameters = $parameters,
-                        func.createdAt = datetime()
-          ON MATCH SET func.lineStart = $lineStart,
-                      func.lineEnd = $lineEnd,
-                      func.parameters = $parameters,
-                      func.updatedAt = datetime()
-          MERGE (f)-[:DEFINES]->(func)
-          `,
+          ENTITY_QUERIES.CREATE_FUNCTION_NODE,
           {
             name: func.name,
             filePath: func.filePath,
@@ -473,21 +393,7 @@ export class Neo4jService implements INeo4jService {
     return this.executeInSession(async (session) => {
       try {
         await session.run(
-          `
-          MATCH (f:File {path: $filePath})
-          MERGE (cls:Class {name: $name, filePath: $filePath})
-          ON CREATE SET cls.lineStart = $lineStart,
-                        cls.lineEnd = $lineEnd,
-                        cls.methods = $methods,
-                        cls.properties = $properties,
-                        cls.createdAt = datetime()
-          ON MATCH SET cls.lineStart = $lineStart,
-                      cls.lineEnd = $lineEnd,
-                      cls.methods = $methods,
-                      cls.properties = $properties,
-                      cls.updatedAt = datetime()
-          MERGE (f)-[:DEFINES]->(cls)
-          `,
+          ENTITY_QUERIES.CREATE_CLASS_NODE,
           {
             name: cls.name,
             filePath: cls.filePath,
@@ -512,17 +418,7 @@ export class Neo4jService implements INeo4jService {
     return this.executeInSession(async (session) => {
       try {
         await session.run(
-          `
-          MATCH (f:File {path: $filePath})
-          MERGE (v:Variable {name: $name, filePath: $filePath})
-          ON CREATE SET v.type = $type,
-                        v.line = $line,
-                        v.createdAt = datetime()
-          ON MATCH SET v.type = $type,
-                      v.line = $line,
-                      v.updatedAt = datetime()
-          MERGE (f)-[:DEFINES]->(v)
-          `,
+          ENTITY_QUERIES.CREATE_VARIABLE_NODE,
           {
             name: variable.name,
             filePath: variable.filePath,
@@ -545,15 +441,7 @@ export class Neo4jService implements INeo4jService {
     return this.executeInSession(async (session) => {
       try {
         await session.run(
-          `
-          MATCH (f:File {path: $filePath})
-          MERGE (i:Import {source: $source, filePath: $filePath})
-          ON CREATE SET i.line = $line,
-                        i.createdAt = datetime()
-          ON MATCH SET i.line = $line,
-                      i.updatedAt = datetime()
-          MERGE (f)-[:IMPORTS]->(i)
-          `,
+          ENTITY_QUERIES.CREATE_IMPORT_NODE,
           {
             source: importNode.source,
             filePath: importNode.filePath,
@@ -575,17 +463,7 @@ export class Neo4jService implements INeo4jService {
     return this.executeInSession(async (session) => {
       try {
         await session.run(
-          `
-          MATCH (f:File {path: $filePath})
-          MERGE (e:Export {name: $name, filePath: $filePath})
-          ON CREATE SET e.line = $line,
-                        e.isDefault = $isDefault,
-                        e.createdAt = datetime()
-          ON MATCH SET e.line = $line,
-                      e.isDefault = $isDefault,
-                      e.updatedAt = datetime()
-          MERGE (f)-[:EXPORTS]->(e)
-          `,
+          ENTITY_QUERIES.CREATE_EXPORT_NODE,
           {
             name: exportNode.name,
             filePath: exportNode.filePath,
@@ -614,11 +492,7 @@ export class Neo4jService implements INeo4jService {
         // Create CALLS relationships
         for (const call of functionCalls) {
           await session.run(
-            `
-            MATCH (caller:Function {name: $callerName, filePath: $filePath})
-            MATCH (callee:Function {name: $calleeName})
-            MERGE (caller)-[:CALLS]->(callee)
-            `,
+            FUNCTION_CALL_QUERIES.CREATE_FUNCTION_CALL_RELATIONSHIP,
             {
               callerName: call.caller,
               calleeName: call.callee,
@@ -647,13 +521,7 @@ export class Neo4jService implements INeo4jService {
     return this.executeInSession(async (session) => {
       try {
         await session.run(
-          `
-          MERGE (d:Directory {path: $path})
-          SET d.name = $name
-          WITH d
-          MATCH (p:Project {name: $projectName})
-          MERGE (p)-[:CONTAINS]->(d)
-          `,
+          DIRECTORY_QUERIES.CREATE_DIRECTORY_NODE,
           { path: dirPath, name: dirName, projectName }
         );
       } catch (error) {
@@ -675,11 +543,7 @@ export class Neo4jService implements INeo4jService {
     return this.executeInSession(async (session) => {
       try {
         await session.run(
-          `
-          MATCH (parent:Directory {path: $parentPath})
-          MATCH (child:Directory {path: $childPath})
-          MERGE (parent)-[:CONTAINS]->(child)
-          `,
+          DIRECTORY_QUERIES.CREATE_DIRECTORY_RELATIONSHIP,
           { parentPath, childPath }
         );
       } catch (error) {
@@ -707,16 +571,7 @@ export class Neo4jService implements INeo4jService {
     return this.executeInSession(async (session) => {
       try {
         await session.run(
-          `
-          MERGE (f:File {path: $path})
-          SET f.name = $name,
-              f.extension = $extension
-          WITH f
-          MATCH (d:Directory {path: $dirPath})
-          MATCH (p:Project {name: $projectName})
-          MERGE (p)-[:CONTAINS]->(d)
-          MERGE (d)-[:CONTAINS]->(f)
-          `,
+          FILE_QUERIES.CREATE_FILE_NODE,
           {
             path: filePath,
             name: fileName,
@@ -743,12 +598,7 @@ export class Neo4jService implements INeo4jService {
     return this.executeInSession(async (session) => {
       try {
         const result = await session.run(
-          `
-          MATCH (p:Project {name: $projectName})-[:HAS_VERSION]->(v:Version)
-          RETURN v.name AS versionName
-          ORDER BY v.timestamp DESC
-          LIMIT 1
-          `,
+          PROJECT_QUERIES.GET_LATEST_VERSION,
           { projectName }
         );
         
@@ -771,12 +621,7 @@ export class Neo4jService implements INeo4jService {
   async getAllFiles(): Promise<{ path: string; name: string; extension: string }[]> {
     return this.executeInSession(async (session) => {
       try {
-        const result = await session.run(
-          `
-          MATCH (f:File)
-          RETURN f.path AS path, f.name AS name, f.extension AS extension
-          `
-        );
+        const result = await session.run(FILE_QUERIES.GET_ALL_FILES);
         
         return result.records.map(record => ({
           path: record.get("path"),
