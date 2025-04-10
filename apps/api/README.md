@@ -4,6 +4,8 @@ The Carver API package provides a RESTful API for the Carver codebase assistant 
 
 ## Recent Updates
 
+- **April 10, 2025**: Fixed bug in GET_DIRECTORY_TREE_BY_PATH query to correctly return a recursive directory tree with all children and their descendants. The query now uses a similar approach to GET_ITEMS_BY_DIRECTORY but retrieves the entire subtree.
+- **April 10, 2025**: Enhanced file editing endpoint to improve reliability when text replacement fails. Now validates text replacements against Redis content and provides content previews when matches fail.
 - **April 08, 2025**: Fixed bug where class methods were not being indexed as separate function nodes. Class methods can now be queried directly using `MATCH (n:Function {name: 'methodName'})` syntax in Neo4j.
 - **April 08, 2025**: Fixed issue with the GET_ITEMS_BY_DIRECTORY query where file items were incorrectly showing directory type. Files now correctly display with their actual filename and file type in the API response.
 
@@ -122,6 +124,13 @@ The API implements REST-compliant search functionality on the `/projects/:projec
 - `GET /projects/:projectId/files/:fileId` - Get a specific file from a project with optional field selection
   - Query Parameters: `fields` - Comma-separated list of fields to include (content, hash, lastModified)
   - Example: `/projects/myproject/files/src/main.ts?fields=content,hash`
+- `PUT /projects/:projectId/files/:fileId` - Replace text in a file with improved reliability
+  - Request Body: JSON object with `oldText` and `newText` properties
+  - Response: 
+    - 200 OK if text was replaced successfully in Redis
+    - 400 Bad Request if text to replace was not found in content (includes content preview for debugging)
+    - 202 Accepted if file not found in Redis and replacement was queued
+  - Example: `PUT /projects/myproject/files/src/main.ts` with `{"oldText": "old code", "newText": "new code"}`
 
 ### Watchers
 

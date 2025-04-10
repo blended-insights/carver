@@ -4,6 +4,13 @@ This document outlines the service interfaces implemented in the Carver Watcher 
 
 ## Updates and Changes
 
+### April 10, 2025 - Directory Tree Query Improvement
+
+- Fixed recursive directory tree query to correctly return all descendants
+- Improved the GET_DIRECTORY_TREE_BY_PATH Cypher query to properly handle all levels of subdirectories
+- The query now returns both the parent directory and all its children with correct typing
+- Fix applies the pattern established by GET_ITEMS_BY_DIRECTORY but extends it to retrieve the entire subtree
+
 ### April 08, 2025 - Class Methods as Function Nodes
 
 - Class methods are now extracted as both part of their parent class and as standalone function nodes

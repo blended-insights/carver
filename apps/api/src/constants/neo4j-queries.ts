@@ -210,31 +210,45 @@ export const DIRECTORY_QUERIES = {
     ORDER BY type DESC, name
   `,
   GET_DIRECTORY_TREE_BY_PATH: `
-    MATCH (p:Project {name: $projectName})-[:CONTAINS]->(d:Directory {path: $dirPath})
-    OPTIONAL MATCH (d)-[:CONTAINS*1..]->(subdir:Directory)
-    OPTIONAL MATCH (d)-[:CONTAINS*1..]->(dir:Directory)-[:CONTAINS]->(f:File)
-    OPTIONAL MATCH (d)-[:CONTAINS]->(rootFile:File)
-    WITH d, subdir, f, rootFile, dir
-    RETURN DISTINCT
-      CASE 
-        WHEN subdir IS NOT NULL THEN subdir.path
-        WHEN rootFile IS NOT NULL THEN rootFile.path
-        ELSE f.path
-      END AS path,
-      CASE 
-        WHEN subdir IS NOT NULL THEN subdir.name
-        WHEN rootFile IS NOT NULL THEN rootFile.name
-        ELSE f.name
-      END AS name,
-      CASE 
-        WHEN subdir IS NOT NULL THEN "directory"
-        ELSE "file"
-      END AS type,
-      CASE 
-        WHEN rootFile IS NOT NULL THEN rootFile.extension
-        WHEN f IS NOT NULL THEN f.extension
-        ELSE null
-      END AS extension
+    // Match the project and directory
+    MATCH (p:Project {name: $projectName})
+    MATCH (dir:Directory {path: $dirPath})
+    // Make sure the directory is within the project's hierarchy
+    MATCH path = shortestPath((p)-[:CONTAINS*]->(dir))
+    WHERE length(path) > 0
+
+    // First, include the root directory itself
+    WITH p, dir
+    RETURN
+      dir.path AS path,
+      dir.name AS name,
+      'directory' AS type,
+      NULL AS extension
+    
+    // Then get all subdirectories (at any level)
+    UNION
+    
+    MATCH (p:Project {name: $projectName})
+    MATCH (dir:Directory {path: $dirPath})
+    MATCH (dir)-[:CONTAINS*1..]->(subdir:Directory)
+    RETURN
+      subdir.path AS path,
+      subdir.name AS name,
+      'directory' AS type,
+      NULL AS extension
+    
+    // Finally get all files under any of the directories
+    UNION
+    
+    MATCH (p:Project {name: $projectName})
+    MATCH (dir:Directory {path: $dirPath})
+    MATCH (dir)-[:CONTAINS*0..]->(parent:Directory)-[:CONTAINS]->(f:File)
+    RETURN
+      f.path AS path,
+      f.name AS name,
+      'file' AS type,
+      f.extension AS extension
+    
     ORDER BY type DESC, path
   `,
 };
