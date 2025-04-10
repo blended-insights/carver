@@ -2,7 +2,6 @@ import {
   create,
   isAxiosError,
   type AxiosInstance,
-  type AxiosRequestConfig,
 } from 'axios';
 
 /**
@@ -86,17 +85,20 @@ export class CarverApiClient {
    * Creates a new API client instance
    * @param baseURL The base URL for the API (defaults to localhost:4000)
    * @param config Additional Axios configuration options
+   * @param host Optional host override (defaults to localhost)
+   * @param port Optional port override (defaults to 4000)
    */
-  constructor(
-    baseURL = process.env.WATCHER_API_URL ?? 'http://localhost:4000',
-    config: AxiosRequestConfig = {}
-  ) {
+  constructor(host?: string, port?: number) {
+    // If host and port are provided, construct baseURL from them
+    const apiHost = host || 'localhost';
+    const apiPort = port || 4000;
+    const baseURL = `http://${apiHost}:${apiPort}`;
+
     // Create axios instance with default configuration
     this.client = create({
       baseURL,
       timeout: 10000, // 10 seconds timeout
       headers: { 'Content-Type': 'application/json' },
-      ...config,
     });
 
     // Add response interceptor for error handling

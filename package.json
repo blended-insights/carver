@@ -7,8 +7,11 @@
     "api:dev": "npx nx run api:serve --configuration=development",
     "dev": "npx nx run-many --target=dev --projects=watcher,web",
     "docker-compose:dev": "docker-compose up neo4j redis",
-    "mcp:dev": "npx nx run mcp:serve --configuration=development --port=9230",
-    "mcp:start": "npx @modelcontextprotocol/inspector node /Users/jamiethompson/dev/carver/packages/mcp/dist/main.js",
+    "docker-compose:up": "docker-compose -f 'docker-compose.yml' up -d --build ",
+    "mcp:dev": "npx nx run mcp:serve --configuration=development -- --port 9230 --log-level debug",
+    "mcp:dev:verbose": "npx nx run mcp:serve --configuration=development -- --port 9230 --verbose --log-level debug",
+    "mcp:start": "npx @modelcontextprotocol/inspector node dist/apps/mcp/main.js",
+    "mcp:start:prod": "NODE_ENV=production node dist/apps/mcp/main.js --host 0.0.0.0 --port 9230",
     "web:build": "NODE_ENV=production npx nx run web:build --prod",
     "web:dev": "npx nx run web:dev",
     "web:start": "npx nx run web:start --prod"

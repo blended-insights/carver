@@ -1,0 +1,10 @@
+{
+  "verbose": false,
+  "debug": false,
+  "logLevel": "info",
+  "environment": "development",
+  "host": "localhost",
+  "port": 9230,
+  
+  "_comment": "This is an example configuration file for the Carver MCP server. Copy this file to config.json and modify as needed."
+}

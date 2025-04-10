@@ -1,6 +1,6 @@
 import z from 'zod';
 import type { McpServer, ToolFunction } from '.';
-import { CarverApiClient } from '@/lib/services';
+import { getApiClient } from '@/lib/services';
 
 interface ReadMultipleFilesProps {
   filePaths: string[];
@@ -21,7 +21,7 @@ const readMultipleFilesTool: ToolFunction<ReadMultipleFilesProps> = async ({
   fields = ['content', 'hash', 'lastModified'], 
 }) => {
   try {
-    const apiClient = new CarverApiClient();
+    const apiClient = getApiClient();
     const responses = await Promise.all(
       filePaths.map((filePath) => apiClient.getProjectFile(projectName, filePath, fields))
     );

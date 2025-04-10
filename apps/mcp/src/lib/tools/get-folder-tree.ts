@@ -1,6 +1,6 @@
 import z from 'zod';
 import type { McpServer, ToolFunction } from '.';
-import { CarverApiClient } from '@/lib/services';
+import { getApiClient } from '@/lib/services';
 
 interface GetFolderTreeProps {
   projectName: string;
@@ -21,7 +21,7 @@ const getFolderTreeTool: ToolFunction<GetFolderTreeProps> = async ({
   depth,
 }) => {
   try {
-    const apiClient = new CarverApiClient();
+    const apiClient = getApiClient();
     const folderTree = await apiClient.getFolderTree(
       projectName,
       folderId,

@@ -8,7 +8,7 @@ const allowedOrigins = {
   ],
   production: [
     'http://localhost:9002', // Docker web app
-    'https://your-production-domain.com',
+    'https://your-production-domain.com'
   ],
 };
 

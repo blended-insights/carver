@@ -1,6 +1,6 @@
 import z from 'zod';
 import type { McpServer, ToolFunction } from '.';
-import { CarverApiClient } from '@/lib/services';
+import { getApiClient } from '@/lib/services';
 
 interface ReadFileProps {
   filePath: string;
@@ -21,7 +21,7 @@ const readFileTool: ToolFunction<ReadFileProps> = async ({
   fields = ['content', 'hash', 'lastModified'],
 }) => {
   try {
-    const apiClient = new CarverApiClient();
+    const apiClient = getApiClient();
     const fileData = await apiClient.getProjectFile(projectName, filePath, fields);
     
     // Return the file data as a formatted result

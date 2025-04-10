@@ -1,6 +1,6 @@
 import z from 'zod';
 import type { McpServer, ToolFunction } from '.';
-import { CarverApiClient } from '@/lib/services';
+import { getApiClient } from '@/lib/services';
 
 interface SearchFilesProps {
   projectName: string;
@@ -21,7 +21,7 @@ const searchFilesTool: ToolFunction<SearchFilesProps> = async ({
   searchType,
 }) => {
   try {
-    const apiClient = new CarverApiClient();
+    const apiClient = getApiClient();
     const searchResults = await apiClient.getProjectFiles(
       projectName,
       searchTerm,

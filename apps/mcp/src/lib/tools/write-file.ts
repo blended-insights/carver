@@ -1,6 +1,6 @@
 import z from 'zod';
 import type { McpServer, ToolFunction } from '.';
-import { CarverApiClient } from '@/lib/services';
+import { getApiClient } from '@/lib/services';
 
 interface WriteFileProps {
   filePath: string;
@@ -21,7 +21,7 @@ const writeFileTool: ToolFunction<WriteFileProps> = async ({
   content,
 }) => {
   try {
-    const apiClient = new CarverApiClient();
+    const apiClient = getApiClient();
     const result = await apiClient.writeProjectFile(projectName, filePath, content);
     
     // Return the result as a formatted response

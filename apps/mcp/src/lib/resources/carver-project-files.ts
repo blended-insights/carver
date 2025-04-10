@@ -4,10 +4,10 @@ import type {
   McpServer,
   ReadResourceTemplateCallback,
 } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { CarverApiClient } from '../services';
+import { getApiClient } from '../services';
 
 const listResources: ListResourcesCallback = async () => {
-  const apiClient = new CarverApiClient();
+  const apiClient = getApiClient();
   const projects = await apiClient.getProjects();
   return {
     resources: projects.map((project) => ({
@@ -22,7 +22,7 @@ const readResources: ReadResourceTemplateCallback = async (
   uri,
   { projectId }
 ) => {
-  const apiClient = new CarverApiClient();
+  const apiClient = getApiClient();
   const files = await apiClient.getProjectFiles(projectId.toString());
 
   return {

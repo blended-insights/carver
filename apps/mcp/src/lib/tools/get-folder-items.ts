@@ -1,6 +1,6 @@
 import z from 'zod';
 import type { McpServer, ToolFunction } from '.';
-import { CarverApiClient } from '@/lib/services';
+import { getApiClient } from '@/lib/services';
 
 interface GetFolderItemsProps {
   projectName: string;
@@ -18,26 +18,36 @@ const getFolderItemsTool: ToolFunction<GetFolderItemsProps> = async ({
   folderId,
 }) => {
   try {
-    const apiClient = new CarverApiClient();
+    const apiClient = getApiClient();
     const folderItems = await apiClient.getFolderItems(projectName, folderId);
-    
+
     // Return the folder items as a formatted result
-    return { 
-      content: [{ 
-        type: 'text', 
-        text: JSON.stringify(folderItems, null, 2) 
-      }] 
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(folderItems, null, 2),
+        },
+      ],
     };
   } catch (error) {
     // Return the error as a formatted result
-    return { 
-      content: [{ 
-        type: 'text', 
-        text: JSON.stringify({ 
-          error: true, 
-          message: `Failed to retrieve folder items for ${folderId}: ${error instanceof Error ? error.message : String(error)}` 
-        }, null, 2) 
-      }] 
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(
+            {
+              error: true,
+              message: `Failed to retrieve folder items for ${folderId}: ${
+                error instanceof Error ? error.message : String(error)
+              }`,
+            },
+            null,
+            2
+          ),
+        },
+      ],
     };
   }
 };
@@ -52,7 +62,9 @@ export function registerGetFolderItemsTool(server: McpServer) {
     'Get items (files and folders) in a specific project folder.',
     {
       projectName: z.string().describe('The name of the project.'),
-      folderId: z.string().describe('The path of the folder to retrieve items from.'),
+      folderId: z
+        .string()
+        .describe('The path of the folder to retrieve items from.'),
     },
     getFolderItemsTool
   );

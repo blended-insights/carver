@@ -1,6 +1,6 @@
 import z from 'zod';
 import type { McpServer, ToolFunction } from '.';
-import { CarverApiClient } from '@/lib/services';
+import { getApiClient } from '@/lib/services';
 
 interface EditFileProps {
   filePath: string;
@@ -24,7 +24,7 @@ const editFileTool: ToolFunction<EditFileProps> = async ({
   newText,
 }) => {
   try {
-    const apiClient = new CarverApiClient();
+    const apiClient = getApiClient();
 
     // Write the updated content back to the file
     const result = await apiClient.updateProjectFile(

@@ -9,6 +9,10 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 // Import transport layer (stdio for command-line communication)
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
+// Load config first to get server options
+import { getConfig } from './lib/config';
+const config = getConfig();
+
 // Import tool registrations from tools module
 import {
   registerReadFileTool,
@@ -24,7 +28,10 @@ import {
 // Import resource registrations from resources module
 import { registerCarverProjectFilesResource } from './lib/resources';
 
-// Create server instance with name, version and capability declarations
+// Import logger and services modules
+import { logger } from './lib/logger';
+import { initializeServices } from './lib/services';
+
 const server = new McpServer({
   name: 'carver', // Server name
   version: '1.0.0', // Server version
@@ -53,18 +60,38 @@ registerWriteFileTool(server); // Tool for writing file content
  * Uses stdio for transport layer communication
  */
 async function main() {
-  // Initialize stdio transport
+  // Initialize transport layer
   const transport = new StdioServerTransport();
 
   // Connect the server to the transport layer
   await server.connect(transport);
 
-  // Log successful startup (using stderr as stdout is used for the protocol)
-  console.error('Carver MCP Server running on stdio 💥');
+  // Set up global configurations based on command line args
+  if (config.debug) {
+    process.env.DEBUG = 'true';
+  }
+
+  // Initialize services
+  initializeServices();
+
+  // Log startup information with appropriate verbosity
+  logger.info('Carver MCP Server running on stdio 💥');
+
+  if (config.verbose) {
+    logger.debug('Server configuration details', {
+      environment: config.environment,
+      host: config.host,
+      port: config.port,
+      logLevel: config.logLevel,
+    });
+  }
 }
 
 // Start the server and handle any fatal errors
 main().catch((error) => {
-  console.error('Fatal error in main():', error);
+  logger.error('Fatal error in main()', {
+    error: error.message,
+    stack: error.stack,
+  });
   process.exit(1); // Exit with error code
 });

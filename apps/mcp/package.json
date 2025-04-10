@@ -11,6 +11,7 @@
   ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.8.0",
+    "commander": "^11.1.0",
     "zod": "3.24.2"
   },
   "nx": {
@@ -27,7 +28,7 @@
           "format": [
             "cjs"
           ],
-          "bundle": false,
+          "bundle": true,
           "main": "apps/mcp/src/main.ts",
           "tsConfig": "apps/mcp/tsconfig.app.json",
           "assets": [
