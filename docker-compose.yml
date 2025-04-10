@@ -56,10 +56,11 @@ services:
       context: .
       dockerfile: ./apps/web/Dockerfile.prod
       args:
+        ALLOWED_ORIGINS: http://localhost:9002
+        NEXT_PUBLIC_REDIS_URL: redis://redis:6379
         NEXT_PUBLIC_WATCHER_API_URL: http://localhost:9001  # used in browser
         INTERNAL_WATCHER_API_URL: http://api:3000           # used in server-side code
         NODE_ENV: production
-        REDIS_URL: redis://redis:6379
     container_name: carver_web
     restart: always
     ports:

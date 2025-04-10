@@ -224,6 +224,9 @@ If you encounter CORS errors when making API requests:
 1. Make sure the watcher service has CORS enabled
 2. Check that the `INTERNAL_WATCHER_API_URL` environment variable is set correctly
 3. Ensure the watcher service is running and accessible
+4. For development environments, the API routes have CORS enabled and allow requests from `http://localhost:3000`
+5. For production environments, the API routes allow requests from domains specified in the `ALLOWED_ORIGINS` environment variable. If not specified, it defaults to `https://app.carver.dev`
+6. For custom domain setups, set the `ALLOWED_ORIGINS` environment variable with a comma-separated list of allowed origins (e.g., `https://app.example.com,https://api.example.com`)
 
 ### Redis Connection Issues
 

@@ -1,18 +1,29 @@
-import { NextRequest } from 'next/server';
+'use server';
+
+import { NextRequest, NextResponse } from 'next/server';
 import Redis from 'ioredis';
+import { applyCorsHeaders, handleOptionsRequest } from '@/utils';
 
 // Redis client configuration
-const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
+const REDIS_URL = process.env.NEXT_PUBLIC_REDIS_URL || 'redis://localhost:6379';
 
 // Create a Redis client
 const createRedisClient = () => {
   return new Redis(REDIS_URL);
 };
 
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
+// Handle OPTIONS preflight requests
+export async function OPTIONS(request: NextRequest) {
+  // Return a response with CORS headers
+  return handleOptionsRequest(request) || 
+    NextResponse.json({}, { status: 204 });
+}
 
 export async function GET(request: NextRequest) {
+  // Handle OPTIONS preflight request
+  const optionsRes = handleOptionsRequest(request);
+  if (optionsRes) return optionsRes;
+
   // Create a Redis client for subscribing to channels
   const subscriber = createRedisClient();
 
@@ -55,13 +66,16 @@ export async function GET(request: NextRequest) {
     writer.close();
   });
 
-  // Return the stream as SSE
-  return new Response(readable, {
+  // Create response with SSE headers
+  const response = new Response(readable, {
     headers: {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache, no-transform',
-      Connection: 'keep-alive',
+      'Connection': 'keep-alive',
       'X-Accel-Buffering': 'no',
     },
   });
+
+  // Apply CORS headers to response
+  return applyCorsHeaders(request, response);
 }

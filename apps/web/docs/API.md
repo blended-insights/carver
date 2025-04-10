@@ -346,7 +346,10 @@ The dashboard interacts with Redis through two main interfaces:
 ## API Security Considerations
 
 - The API currently does not implement authentication
-- CORS is enabled on the server to allow cross-origin requests from the dashboard
+- CORS is enabled on both the client and server to allow cross-origin requests:
+  - Development environment: `http://localhost:3000` is allowed
+  - Production environment: `https://app.carver.dev` or custom domains specified in the `ALLOWED_ORIGINS` environment variable
+- All API routes support OPTIONS preflight requests for proper CORS handling
 - For production deployment, consider adding:
   - API authentication
   - Rate limiting
