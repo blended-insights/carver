@@ -1,0 +1,81 @@
+{
+  "name": "@carver/mcp",
+  "version": "0.0.1",
+  "private": true,"bin": "./dist/main.js",
+  "scripts": {
+    "build": "tsc && npm run chmod",
+    "chmod": "chmod 755 dist/main.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.8.0",
+    "zod": "3.24.2"
+  },
+  "nx": {
+    "targets": {
+      "build": {
+        "executor": "@nx/esbuild:esbuild",
+        "outputs": [
+          "{options.outputPath}"
+        ],
+        "defaultConfiguration": "production",
+        "options": {
+          "platform": "node",
+          "outputPath": "apps/mcp/dist",
+          "format": [
+            "cjs"
+          ],
+          "bundle": false,
+          "main": "apps/mcp/src/main.ts",
+          "tsConfig": "apps/mcp/tsconfig.app.json",
+          "assets": [
+            "apps/mcp/src/assets"
+          ],
+          "esbuildOptions": {
+            "sourcemap": true,
+            "outExtension": {
+              ".js": ".js"
+            }
+          }
+        },
+        "configurations": {
+          "development": {},
+          "production": {
+            "esbuildOptions": {
+              "sourcemap": false,
+              "outExtension": {
+                ".js": ".js"
+              }
+            }
+          }
+        }
+      },
+      "serve": {
+        "executor": "@nx/js:node",
+        "defaultConfiguration": "development",
+        "dependsOn": [
+          "build"
+        ],
+        "options": {
+          "buildTarget": "@carver/mcp:build",
+          "runBuildTargetDependencies": false
+        },
+        "configurations": {
+          "development": {
+            "buildTarget": "@carver/mcp:build:development"
+          },
+          "production": {
+            "buildTarget": "@carver/mcp:build:production"
+          }
+        }
+      },
+      "test": {
+        "options": {
+          "passWithNoTests": true
+        }
+      }
+    }
+  }
+}

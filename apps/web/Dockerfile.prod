@@ -1,0 +1,45 @@
+FROM docker.io/node:lts-alpine AS base
+
+#---------------------------------------------------------------------
+# BUILDER
+#---------------------------------------------------------------------
+FROM base AS builder
+
+ENV NODE_ENV=production
+WORKDIR /app
+
+COPY . .
+
+# Environment variables must be present at build time
+# https://github.com/vercel/next.js/discussions/14030
+ARG INTERNAL_WATCHER_API_URL
+ARG NODE_ENV
+ARG REDIS_URL
+ARG NEXT_PUBLIC_WATCHER_API_URL
+ENV INTERNAL_WATCHER_API_URL=${INTERNAL_WATCHER_API_URL}
+ENV NODE_ENV=${NODE_ENV}
+ENV REDIS_URL=${REDIS_URL}
+ENV NEXT_PUBLIC_WATCHER_API_URL=${NEXT_PUBLIC_WATCHER_API_URL}
+
+ENV NEXT_PUBLIC_WATCHER_API_URL=http://localhost:9001 
+
+RUN npm ci --include=dev
+RUN npm run web:build
+
+#---------------------------------------------------------------------
+# RUNNER
+#---------------------------------------------------------------------
+FROM base AS runner
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Copy standalone app build
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./public
+
+USER nextjs
+
+CMD [ "node", "apps/web/server" ]

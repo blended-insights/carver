@@ -2,8 +2,24 @@
   "name": "@carver/api",
   "version": "0.0.1",
   "private": true,
+  "dependencies": {
+    "bull": "4.16.5",
+    "chokidar": "^3.6.0",
+    "cors": "2.8.5",
+    "crypto": "^1.0.1",
+    "express": "^4.21.2",
+    "ioredis": "^5.3.2",
+    "neo4j-driver": "^5.15.0",
+    "redlock": "5.0.0-beta.2",
+    "ts-morph": "^20.0.0"
+  },
+  "devDependencies": {
+    "@types/bull": "3.15.9",
+    "@types/cors": "2.8.17",
+    "@types/redlock": "4.0.7"
+  },
   "nx": {
-    "name": "api",
+    "name": "@carver/api",
     "targets": {
       "build": {
         "executor": "@nx/esbuild:esbuild",
@@ -17,7 +33,7 @@
           "format": [
             "cjs"
           ],
-          "bundle": false,
+          "bundle": true,
           "main": "apps/api/src/main.ts",
           "tsConfig": "apps/api/tsconfig.app.json",
           "assets": [
@@ -50,15 +66,15 @@
           "build"
         ],
         "options": {
-          "buildTarget": "api:build",
+          "buildTarget": "@carver/api:build",
           "runBuildTargetDependencies": false
         },
         "configurations": {
           "development": {
-            "buildTarget": "api:build:development"
+            "buildTarget": "@carver/api:build:development"
           },
           "production": {
-            "buildTarget": "api:build:production"
+            "buildTarget": "@carver/api:build:production"
           }
         }
       },
@@ -71,7 +87,7 @@
         "dependsOn": [
           "build"
         ],
-        "command": "docker build -f apps/api/Dockerfile . -t api"
+        "command": "docker build -f apps/api/Dockerfile . -t carver-api"
       }
     }
   }

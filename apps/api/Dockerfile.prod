@@ -1,0 +1,32 @@
+FROM docker.io/node:lts-alpine AS base
+
+#---------------------------------------------------------------------
+# BUILDER
+#---------------------------------------------------------------------
+FROM base AS builder
+
+ENV NODE_ENV=production
+WORKDIR /app
+    
+COPY . .
+
+RUN npm ci --include=dev
+
+RUN npm run api:build
+
+#---------------------------------------------------------------------
+# RUNNER
+#---------------------------------------------------------------------
+FROM base AS runner
+
+RUN addgroup --system api 
+RUN adduser --system -G api api
+
+COPY --from=builder --chown=api:api /app/apps/api/package.json ./
+COPY --from=builder --chown=api:api /app/apps/api/dist ./
+
+RUN npm install --omit=dev
+
+USER api
+
+CMD [ "node", "main" ]
