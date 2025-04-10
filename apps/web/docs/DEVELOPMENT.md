@@ -1,6 +1,6 @@
-# Carver Watcher Dashboard Development Guide
+# Carver Dashboard Development Guide
 
-This guide provides information for developers who want to extend, modify, or contribute to the Carver Watcher Dashboard.
+This guide provides information for developers who want to extend, modify, or contribute to the Carver Dashboard.
 
 ## Development Environment
 

@@ -1,6 +1,6 @@
-# Carver Watcher Dashboard Component Documentation
+# Carver Dashboard Component Documentation
 
-This document provides detailed information about the components used in the Carver Watcher Dashboard.
+This document provides detailed information about the components used in the Carver Dashboard.
 
 ## Layout Component
 

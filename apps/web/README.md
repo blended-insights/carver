@@ -1,8 +1,8 @@
-# Carver Watcher Dashboard Documentation
+# Carver Dashboard Documentation
 
 ## Overview
 
-The Carver Watcher Dashboard is a user-friendly web interface for managing and monitoring file watcher processes. It provides developers with a simple way to start, stop, and monitor file watchers that track changes in project directories.
+The Carver Dashboard is a user-friendly web interface for managing and monitoring file watcher processes. It provides developers with a simple way to start, stop, and monitor file watchers that track changes in project directories.
 
 ## Features
 

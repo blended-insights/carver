@@ -8,7 +8,7 @@ import './globals.css';
 import { type ReactNode } from 'react';
 
 export const metadata = {
-  title: 'Carver Watcher Dashboard',
+  title: 'Carver Dashboard',
   description: 'Monitor and manage your code watcher processes',
 };
 

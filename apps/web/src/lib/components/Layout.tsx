@@ -53,7 +53,7 @@ export function Layout({ children }: LayoutProps) {
           <Group>
             <IconCode size={24} />
             <Title order={3} className="mono">
-              Carver Watcher
+              Carver
             </Title>
           </Group>
         </Group>

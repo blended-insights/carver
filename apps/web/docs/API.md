@@ -1,6 +1,6 @@
-# Carver Watcher Dashboard API Documentation
+# Carver Dashboard API Documentation
 
-This document details the API integration between the Carver Watcher Dashboard and the Watcher service.
+This document details the API integration between the Carver Dashboard and the Watcher service.
 
 ## API Client Setup
 

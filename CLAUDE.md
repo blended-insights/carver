@@ -27,3 +27,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Services in `apps/watcher/src/services`
 - UI components in `apps/web/src/components`
 - Watcher APIs in `apps/watcher/src/app/routes`
+
+## Commit Message Syntax
+
+```
+<type>[optional scope]: <description>
+[optional body]
+[optional footer(s)]
+```
+- `feat`: A new feature
+- `fix`: A bug fix
+- `docs`: Documentation only changes
+- `style`: Changes that do not affect the meaning of the code
+- `refactor`: A code change that neither fixes a bug nor adds a feature
+- `perf`: A code change that improves performance
+- `test`: Adding missing tests or correcting existing tests
+- `chore`: Changes to the build process or auxiliary tools
