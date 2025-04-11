@@ -259,6 +259,30 @@ export class WatcherManager implements IWatcherManager {
   }
 
   /**
+   * Get all active watchers with details
+   * @returns Array of active watcher details
+   */
+  getActiveWatcherById(watcherId: string):
+    | {
+        processId: string;
+        folderPath: string;
+        projectName: string;
+        status: 'running';
+      }
+    | undefined {
+    const watcherData = this.watchers.get(watcherId);
+    if (watcherData) {
+      return {
+        processId: watcherData.processId,
+        folderPath: watcherData.folderPath,
+        projectName: watcherData.projectName,
+        status: 'running',
+      };
+    }
+    return undefined;
+  }
+
+  /**
    * Get active watcher process IDs
    * @returns Array of active watcher process IDs
    */

@@ -16,10 +16,7 @@ router.get('/', async (req: Request, res: Response) => {
     logger.info(`Getting details for watcher process ID: ${processId}`);
 
     // Get all active watchers
-    const watchers = watcherManager.getActiveWatchers();
-
-    // Find the specific watcher by its processId
-    const watcher = watchers.find((w) => w.processId === processId);
+    const watcher = watcherManager.getActiveWatcherById(processId);
 
     if (!watcher) {
       return res.status(404).json({

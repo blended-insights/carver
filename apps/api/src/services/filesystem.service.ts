@@ -272,6 +272,27 @@ export class FileSystemService implements IFileSystemService {
   }
 
   /**
+   * Create a directory on disk asynchronously (recursively if needed)
+   * @param dirPath Path to the directory to create
+   * @returns Promise resolving to boolean indicating if the directory creation was successful
+   */
+  async createDirectory(dirPath: string): Promise<boolean> {
+    try {
+      // Create the directory and any needed parent directories
+      if (!fs.existsSync(dirPath)) {
+        await fs.promises.mkdir(dirPath, { recursive: true });
+        logger.info(`Directory successfully created: ${dirPath}`);
+      } else {
+        logger.info(`Directory already exists: ${dirPath}`);
+      }
+      return true;
+    } catch (error) {
+      logger.error(`Error creating directory ${dirPath}:`, error);
+      return false;
+    }
+  }
+
+  /**
    * Replace text in a file on disk asynchronously
    * @param filePath Path to the file
    * @param oldText Text to be replaced
@@ -300,7 +321,7 @@ export class FileSystemService implements IFileSystemService {
 
       // Perform replacement
       const updatedContent = content.replace(
-        new RegExp(oldText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
+        new RegExp(oldText.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&'), 'g'),
         newText
       );
 

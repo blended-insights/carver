@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import logger from '@/utils/logger';
 import { neo4jService } from '@/services';
 import folderIdRouter from './:folderId';
+import folderPostRouter from './post';
 
 const router = Router({ mergeParams: true });
 
@@ -89,6 +90,7 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
+router.use('/', folderPostRouter);
 router.use('/:folderId', folderIdRouter);
 
 export default router;

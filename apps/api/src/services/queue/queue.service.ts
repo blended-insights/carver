@@ -5,7 +5,7 @@ import path from 'path';
 // import RedLock from 'redlock';
 
 /**
- * Service to handle file processing queue operations
+ * Service to handle file and folder processing queue operations
  */
 export class QueueService {
   private fileQueue: Queue.Queue;
@@ -34,12 +34,12 @@ export class QueueService {
     // });
 
     // Set up the processor
-    this.fileQueue.process(this.processFileJob.bind(this));
+    this.fileQueue.process(this.processJob.bind(this));
 
     // Set up event handlers
     this.setupEventHandlers();
 
-    logger.info('File processing queue initialized');
+    logger.info('Processing queue initialized');
   }
 
   /**
@@ -96,6 +96,37 @@ export class QueueService {
   }
 
   /**
+   * Add a folder creation job to the queue
+   * @param projectId Project ID
+   * @param folderPath Folder path to create
+   * @param diskPath Base disk path to create the folder
+   * @returns Job object
+   */
+  async addFolderJob(
+    projectId: string,
+    folderPath: string,
+    diskPath: string
+  ): Promise<Queue.Job> {
+    try {
+      const job = await this.fileQueue.add({
+        projectId,
+        folderPath,
+        diskPath,
+        jobType: 'folder',
+        timestamp: Date.now(),
+      });
+
+      logger.info(
+        `Added folder job ${job.id} to queue for ${folderPath} in ${projectId}`
+      );
+      return job;
+    } catch (error) {
+      logger.error(`Error adding folder job to queue:`, error);
+      throw error;
+    }
+  }
+
+  /**
    * Get a job by ID
    * @param jobId Job ID
    * @returns Job object or null if not found
@@ -110,39 +141,39 @@ export class QueueService {
   }
 
   /**
-   * Process a file job with locking to prevent race conditions
+   * Process a job (file or folder operation)
    * @param job Bull job object
    * @returns Processing result
    */
-  private async processFileJob(job: Queue.Job): Promise<Record<string, any>> {
+  private async processJob(job: Queue.Job): Promise<Record<string, any>> {
     const {
       projectId,
-      fileId,
-      content,
-      diskPath,
       jobType = 'write',
     } = job.data;
-    logger.info(`Processing ${jobType} job ${job.id} for ${fileId}`);
-
-    // Create a resource key for locking
-    // const lockKey = `lock:project:${projectId}:file:${fileId}`;
-    // let lock;
-
+    
     try {
-      // Acquire a lock (5 second timeout)
-      // lock = await this.redlock.acquire([lockKey], 5000);
-      // logger.debug(`Lock acquired for ${fileId}`);
-
       // Process based on job type
       if (jobType === 'replace') {
+        const { fileId, content, diskPath } = job.data;
+        logger.info(`Processing replace job ${job.id} for ${fileId}`);
         return await this.processTextReplacement(
           projectId,
           fileId,
           content,
           diskPath
         );
+      } else if (jobType === 'folder') {
+        const { folderPath, diskPath } = job.data;
+        logger.info(`Processing folder job ${job.id} for ${folderPath}`);
+        return await this.processFolderCreation(
+          projectId,
+          folderPath,
+          diskPath
+        );
       } else {
         // Default to write operation
+        const { fileId, content, diskPath } = job.data;
+        logger.info(`Processing write job ${job.id} for ${fileId}`);
         return await this.processFileWithLock(
           projectId,
           fileId,
@@ -151,18 +182,47 @@ export class QueueService {
         );
       }
     } catch (error) {
-      logger.error(`Error processing file job ${job.id}:`, error);
+      logger.error(`Error processing job ${job.id}:`, error);
       throw error;
-    } finally {
-      // Always release the lock when done
-      // if (lock) {
-      //   try {
-      //     await lock.unlock();
-      //     logger.debug(`Lock released for ${fileId}`);
-      //   } catch (releaseError) {
-      //     logger.warn(`Error releasing lock for ${fileId}:`, releaseError);
-      //   }
-      // }
+    }
+  }
+
+  /**
+   * Process a folder creation job
+   * @param projectId Project ID
+   * @param folderPath Folder path to create
+   * @param diskPath Base disk path
+   * @returns Processing result
+   */
+  private async processFolderCreation(
+    projectId: string,
+    folderPath: string,
+    diskPath: string
+  ): Promise<Record<string, any>> {
+    try {
+      // Construct the full folder path
+      const fullPath = path.join(diskPath, folderPath);
+
+      // Create the directory (recursively if needed)
+      const result = await fileSystemService.createDirectory(fullPath);
+
+      if (!result) {
+        throw new Error(`Failed to create directory ${folderPath}`);
+      }
+
+      logger.info(`Directory ${folderPath} created at ${fullPath}`);
+
+      // Return success with folder metadata
+      return {
+        success: true,
+        projectId,
+        folderPath,
+        fullPath,
+        lastModified: Date.now().toString(),
+      };
+    } catch (error) {
+      logger.error(`Error in folder creation:`, error);
+      throw error;
     }
   }
 
@@ -309,9 +369,9 @@ export class QueueService {
   async close(): Promise<void> {
     try {
       await this.fileQueue.close();
-      logger.info('File processing queue closed');
+      logger.info('Processing queue closed');
     } catch (error) {
-      logger.error('Error closing file queue:', error);
+      logger.error('Error closing queue:', error);
       throw error;
     }
   }
