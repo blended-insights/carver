@@ -1,61 +1,12 @@
 import { Router, Request, Response } from 'express';
 import logger from '@/utils/logger';
-import { neo4jService, queueService, redisService } from '@/services';
-import fileSystemService from '@/services/filesystem.service';
+import { ensureFileInRedis, updateFileAndQueueWrite } from './shared-utils';
 
 const router = Router({ mergeParams: true });
 
 /**
- * Helper function to add a job to the queue and return response for line-based operations
- */
-async function queueLineOperation(
-  res: Response,
-  projectId: string,
-  fileId: string,
-  startLine: number,
-  endLine: number | undefined,
-  content: string | undefined,
-  operation: 'replace' | 'insert' | 'delete',
-  statusCode: 200 | 202 = 202,
-  additionalData: Record<string, unknown> = {}
-): Promise<Response> {
-  // Get project path from Neo4j for the queue job
-  const project = await neo4jService.getProjectByName(projectId);
-  const diskPath = project?.path;
-
-  // For insert operations, set endLine to startLine if it's undefined
-  const finalEndLine =
-    operation === 'insert' && endLine === undefined ? startLine : endLine;
-
-  // Add file line patch job to queue
-  const job = await queueService.addFileJob(
-    projectId,
-    fileId,
-    JSON.stringify({ startLine, endLine: finalEndLine, content, operation }),
-    diskPath,
-    'patch'
-  );
-  // Prepare response message based on status code
-  const message =
-    statusCode === 200
-      ? `Line-based ${operation} for file ${fileId} completed successfully`
-      : `Line-based ${operation} for file ${fileId} queued for processing`;
-
-  return res.status(statusCode).json({
-    success: true,
-    message,
-    data: {
-      jobId: job.id,
-      path: fileId,
-      operation,
-      ...additionalData,
-    },
-  });
-}
-
-/**
  * Route handler for replacing lines in a file
- * Attempts direct Redis update first, falls back to queue system
+ * Attempts direct Redis update first, falls back to filesystem check
  */
 router.patch('/', async (req: Request, res: Response) => {
   logger.debug('Line-based patch for file in project', req.params);
@@ -110,28 +61,16 @@ router.patch('/', async (req: Request, res: Response) => {
       }
     }
 
-    // Get the file content from Redis
-    const fileData = await redisService.getProjectFile(projectId, fileId);
-
-    if (!fileData || !fileData.content) {
-      logger.warn(`File ${fileId} not found in Redis for project ${projectId}`);
-
-      // Fall back to queue
-      logger.info(
-        `Falling back to queue for line-based ${operation} in file ${fileId}, project: ${projectId}`
-      );
-      return queueLineOperation(
-        res,
-        projectId,
-        fileId,
-        startLine,
-        endLine,
-        content,
-        operation
-      );
+    // Ensure file is available in Redis
+    const fileResult = await ensureFileInRedis(projectId, fileId);
+    if (!fileResult.success || !fileResult.content) {
+      return res.status(404).json({
+        success: false,
+        message: fileResult.message,
+      });
     }
 
-    const currentContent = fileData.content;
+    const currentContent = fileResult.content;
 
     // Split the content into lines
     const lines = currentContent.split('\n');
@@ -201,29 +140,15 @@ router.patch('/', async (req: Request, res: Response) => {
         });
     }
 
-    // Calculate new hash
-    const hash = fileSystemService.calculateHash(updatedContent);
-
-    // Store updated content in Redis
-    await redisService.storeFileData(projectId, fileId, updatedContent, hash);
-
-    logger.info(
-      `Successfully ${operation}d lines ${startLine}-${endLine} in file ${fileId} in Redis for project ${projectId}`
-    );
-
-    // Queue job for disk persistence with 200 status code and additional hash/timestamp data
-    return queueLineOperation(
+    // Update file in Redis and queue disk write
+    return updateFileAndQueueWrite(
       res,
       projectId,
       fileId,
-      startLine,
-      endLine,
-      content,
-      operation,
-      200,
+      updatedContent,
+      `line-based ${operation}`,
       {
-        hash,
-        lastModified: Date.now().toString(),
+        operation,
         linesAffected: operation === 'insert' ? 1 : endLine - startLine + 1,
       }
     );
@@ -237,5 +162,3 @@ router.patch('/', async (req: Request, res: Response) => {
     });
   }
 });
-
-export default router;

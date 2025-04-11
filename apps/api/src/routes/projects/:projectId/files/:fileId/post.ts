@@ -28,7 +28,15 @@ router.post('/', async (req: Request, res: Response) => {
 
     // Get project path from Neo4j
     const project = await neo4jService.getProjectByName(projectId);
-    const diskPath = project?.path;
+
+    if (!project || !project.path) {
+      return res.status(404).json({
+        success: false,
+        message: `Project ${projectId} not found`,
+      });
+    }
+
+    const diskPath = project.path;
 
     // Add file processing job to queue
     const job = await queueService.addFileJob(

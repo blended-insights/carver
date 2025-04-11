@@ -10,8 +10,8 @@
     "docker-compose:up": "docker-compose -f 'docker-compose.yml' up -d --build ",
     "mcp:dev": "npx nx run mcp:serve --configuration=development",
     "mcp:dev:verbose": "npx nx run mcp:serve --configuration=development",
-    "mcp:start": "npx @modelcontextprotocol/inspector node dist/apps/mcp/main.js",
-    "mcp:start:prod": "NODE_ENV=production node dist/apps/mcp/main.js --host 0.0.0.0 --port 9230",
+    "mcp:start": "npx @modelcontextprotocol/inspector node apps/mcp/dist/main.js",
+    "mcp:start:prod": "NODE_ENV=production node apps/mcp/dist/main.js --host 0.0.0.0 --port 9230",
     "web:build": "NODE_ENV=production npx nx run web:build --prod",
     "web:dev": "npx nx run web:dev",
     "web:start": "npx nx run web:start --prod"
