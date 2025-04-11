@@ -5,7 +5,7 @@ export type FormValues = {
   selectedDocs: string[];
   description: string;
   requirements: string[]; // Changed from string to string[]
-  notes: string;
+  notes?: string;
   observedBehavior: string;
   desiredBehavior: string;
   customInstructions?: string[];
@@ -98,7 +98,7 @@ export function promptBuilder({
       : requirements;
 
     prompt += `## Requirements\n${requirementsText}\n\n`;
-  } else if (requestType === 'enhancement') {
+  } else if (requestType === 'enhancement' && notes) {
     prompt += `## Notes\n${notes}\n\n`;
   } else if (requestType === 'bug') {
     prompt += `## Observed Behavior\n${observedBehavior}\n\n`;
@@ -134,7 +134,7 @@ export function promptBuilder({
     .join('\n')}\n\n`;
 
   // Add detail information
-  prompt += `## Details\nProject: ${projectName}\nProject Path: ${folderPath}\n\n`;
+  prompt += `## Details\nProject: ${projectName}\nProject Path: ${folderPath}`;
 
   return prompt;
 }

@@ -81,9 +81,7 @@ export function PromptBuilderModal({
             ? null
             : 'Please provide at least one requirement';
         } else if (values.requestType === 'enhancement') {
-          errors.notes = values.notes
-            ? null
-            : 'Please provide enhancement notes';
+          // notes is optional for enhancement requests
         } else if (values.requestType === 'bug') {
           errors.observedBehavior = values.observedBehavior
             ? null

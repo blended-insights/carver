@@ -30,7 +30,7 @@ services:
       context: .
       dockerfile: ./apps/api/Dockerfile.prod
     container_name: carver_api
-    restart: always
+    restart: unless-stopped
     ports:
       - 9001:3000
     networks:
@@ -62,7 +62,7 @@ services:
         INTERNAL_WATCHER_API_URL: http://api:3000           # used in server-side code
         NODE_ENV: production
     container_name: carver_web
-    restart: always
+    restart: unless-stopped
     ports:
       - 9002:3000
     networks:
