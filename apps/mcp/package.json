@@ -4,7 +4,8 @@
   "private": true,"bin": "./dist/main.js",
   "scripts": {
     "build": "tsc && npm run chmod",
-    "chmod": "chmod 755 dist/main.js"
+    "chmod": "chmod 755 dist/main.js",
+    "tsc": "tsc -p tsconfig.json"
   },
   "files": [
     "dist"

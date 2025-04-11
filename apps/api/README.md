@@ -126,11 +126,32 @@ The API implements REST-compliant search functionality on the `/projects/:projec
   - Example: `/projects/myproject/files/src/main.ts?fields=content,hash`
 - `PUT /projects/:projectId/files/:fileId` - Replace text in a file with improved reliability
   - Request Body: JSON object with `oldText` and `newText` properties
-  - Response: 
+  - Response:
     - 200 OK if text was replaced successfully in Redis
     - 400 Bad Request if text to replace was not found in content (includes content preview for debugging)
     - 202 Accepted if file not found in Redis and replacement was queued
   - Example: `PUT /projects/myproject/files/src/main.ts` with `{"oldText": "old code", "newText": "new code"}`
+  - `PUT /projects/:projectId/files/:fileId` - Replace text in a file with improved reliability
+  - Request Body: JSON object with `oldText` and `newText` properties
+  - Response:
+    - 200 OK if text was replaced successfully in Redis
+    - 400 Bad Request if text to replace was not found in content (includes content preview for debugging)
+    - 202 Accepted if file not found in Redis and replacement was queued
+  - Example: `PUT /projects/myproject/files/src/main.ts` with `{\"oldText\": \"old code\", \"newText\": \"new code\"}`
+- `PATCH /projects/:projectId/files/:fileId` - Modify file content by line numbers
+  - Request Body: JSON object with:
+    - `startLine`: Start line number (1-based, required for all operations)
+    - `endLine`: End line number (1-based, inclusive, required for replace/delete)
+    - `content`: New content (required for replace/insert, ignored for delete)
+    - `operation`: Type of operation: 'replace' (default), 'insert', or 'delete'
+  - Response:
+    - 200 OK if lines were modified successfully in Redis
+    - 400 Bad Request if line numbers are invalid (includes line count for debugging)
+    - 202 Accepted if file not found in Redis and operation was queued
+  - Examples:
+    - Replace lines: `PATCH /projects/myproject/files/src/main.ts` with `{"startLine": 10, "endLine": 15, "content": "// new content", "operation": "replace"}`
+    - Insert line: `PATCH /projects/myproject/files/src/main.ts` with `{"startLine": 10, "content": "// inserted line", "operation": "insert"}`
+    - Delete lines: `PATCH /projects/myproject/files/src/main.ts` with `{"startLine": 10, "endLine": 15, "operation": "delete"}`
 
 ### Watchers
 

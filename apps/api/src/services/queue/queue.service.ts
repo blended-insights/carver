@@ -63,9 +63,9 @@ export class QueueService {
    * Add a file processing job to the queue
    * @param projectId Project ID
    * @param fileId File ID
-   * @param content File content or object containing oldText/newText for replacement
+   * @param content File content or object containing oldText/newText for replacement or line-based parameters
    * @param diskPath Optional disk path to write the file
-   * @param jobType Type of job (write or replace)
+   * @param jobType Type of job (write, replace, or patch)
    * @returns Job object
    */
   async addFileJob(
@@ -73,7 +73,7 @@ export class QueueService {
     fileId: string,
     content: string,
     diskPath?: string,
-    jobType: 'write' | 'replace' = 'write'
+    jobType: 'write' | 'replace' | 'patch' = 'write'
   ): Promise<Queue.Job> {
     try {
       const job = await this.fileQueue.add({
@@ -145,18 +145,24 @@ export class QueueService {
    * @param job Bull job object
    * @returns Processing result
    */
-  private async processJob(job: Queue.Job): Promise<Record<string, any>> {
-    const {
-      projectId,
-      jobType = 'write',
-    } = job.data;
-    
+  private async processJob(job: Queue.Job): Promise<Record<string, unknown>> {
+    const { projectId, jobType = 'write' } = job.data;
+
     try {
       // Process based on job type
       if (jobType === 'replace') {
         const { fileId, content, diskPath } = job.data;
         logger.info(`Processing replace job ${job.id} for ${fileId}`);
         return await this.processTextReplacement(
+          projectId,
+          fileId,
+          content,
+          diskPath
+        );
+      } else if (jobType === 'patch') {
+        const { fileId, content, diskPath } = job.data;
+        logger.info(`Processing patch job ${job.id} for ${fileId}`);
+        return await this.processLinePatch(
           projectId,
           fileId,
           content,
@@ -198,7 +204,7 @@ export class QueueService {
     projectId: string,
     folderPath: string,
     diskPath: string
-  ): Promise<Record<string, any>> {
+  ): Promise<Record<string, unknown>> {
     try {
       // Construct the full folder path
       const fullPath = path.join(diskPath, folderPath);
@@ -239,7 +245,7 @@ export class QueueService {
     fileId: string,
     contentJson: string,
     diskPath?: string
-  ): Promise<Record<string, any>> {
+  ): Promise<Record<string, unknown>> {
     try {
       // Parse the content JSON to get oldText and newText
       const { oldText, newText } = JSON.parse(contentJson);
@@ -287,6 +293,57 @@ export class QueueService {
     }
   }
 
+  private async processLinePatch(
+    projectId: string,
+    fileId: string,
+    contentJson: string,
+    diskPath = ''
+  ): Promise<Record<string, unknown>> {
+    // Parse the content JSON to get parameters
+    const {
+      startLine,
+      endLine,
+      content,
+      operation = 'replace',
+    } = JSON.parse(contentJson);
+
+    try {
+      // For insert operations, endLine can be the same as startLine if not provided
+      const finalEndLine =
+        operation === 'insert' && endLine === undefined ? startLine : endLine;
+
+      // Perform the line-based operation
+      const result = await fileSystemService.modifyLinesByNumber(
+        diskPath,
+        startLine,
+        finalEndLine,
+        content || '', // For delete, content can be empty
+        operation
+      );
+
+      if (!result.success) {
+        throw new Error(`Failed to ${operation} lines in file ${fileId}`);
+      }
+
+      // Calculate hash for the updated content
+      const hash = fileSystemService.calculateHash(result.content || '');
+
+      // Return success with file metadata
+      return {
+        success: true,
+        projectId,
+        fileId,
+        hash,
+        lastModified: Date.now().toString(),
+        linesAffected: operation === 'insert' ? 1 : endLine - startLine + 1,
+        operation,
+      };
+    } catch (error) {
+      logger.error(`Error in line-based ${operation} processing:`, error);
+      throw error;
+    }
+  }
+
   /**
    * Process a file with lock held
    * @param projectId Project ID
@@ -300,7 +357,7 @@ export class QueueService {
     fileId: string,
     content: string,
     diskPath?: string
-  ): Promise<Record<string, any>> {
+  ): Promise<Record<string, unknown>> {
     try {
       // Calculate hash for the file content
       const hash = fileSystemService.calculateHash(content);

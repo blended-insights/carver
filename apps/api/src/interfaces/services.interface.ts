@@ -109,20 +109,39 @@ export interface INeo4jService {
     fileCount: number;
     lastUpdated: string | null;
   } | null>;
-  getAllProjects(): Promise<Array<{
-    id: string;
-    name: string;
-    path: string;
-    fileCount: number;
-    lastUpdated: string | null;
-  }>>;
+  getAllProjects(): Promise<
+    Array<{
+      id: string;
+      name: string;
+      path: string;
+      fileCount: number;
+      lastUpdated: string | null;
+    }>
+  >;
   getAllFiles(): Promise<{ path: string; name: string; extension: string }[]>;
-  getFilesByProject(projectName: string): Promise<{ path: string; name: string; extension: string }[]>;
-  searchFilesByProject(projectName: string, searchTerm: string): Promise<{ path: string; name: string; extension: string }[]>;
-  searchFilesByFunction(projectName: string, searchTerm: string): Promise<{ path: string; name: string; extension: string }[]>;
-  searchFilesByImport(projectName: string, searchTerm: string): Promise<{ path: string; name: string; extension: string }[]>;
-  searchFilesByDirectory(projectName: string, searchTerm: string): Promise<{ path: string; name: string; extension: string }[]>;
-  executeQuery<T = Record<string, any>>(query: string, params?: Record<string, any>): Promise<T[]>;
+  getFilesByProject(
+    projectName: string
+  ): Promise<{ path: string; name: string; extension: string }[]>;
+  searchFilesByProject(
+    projectName: string,
+    searchTerm: string
+  ): Promise<{ path: string; name: string; extension: string }[]>;
+  searchFilesByFunction(
+    projectName: string,
+    searchTerm: string
+  ): Promise<{ path: string; name: string; extension: string }[]>;
+  searchFilesByImport(
+    projectName: string,
+    searchTerm: string
+  ): Promise<{ path: string; name: string; extension: string }[]>;
+  searchFilesByDirectory(
+    projectName: string,
+    searchTerm: string
+  ): Promise<{ path: string; name: string; extension: string }[]>;
+  executeQuery<T = Record<string, any>>(
+    query: string,
+    params?: Record<string, any>
+  ): Promise<T[]>;
   clearDatabase(): Promise<void>;
 }
 
@@ -133,8 +152,13 @@ export interface IRedisService {
   getClient(): Redis;
   close(): Promise<void>;
   getProjectFileKeys(projectName: string): Promise<string[]>;
-  scanKeys(pattern: string, type?: 'hash' | 'string' | 'list' | 'set' | 'zset'): Promise<string[]>;
-  getProjectFiles(projectName: string): Promise<{ path: string; name: string; extension: string }[]>;
+  scanKeys(
+    pattern: string,
+    type?: 'hash' | 'string' | 'list' | 'set' | 'zset'
+  ): Promise<string[]>;
+  getProjectFiles(
+    projectName: string
+  ): Promise<{ path: string; name: string; extension: string }[]>;
   getFileHash(projectName: string, filePath: string): Promise<string | null>;
   storeFileData(
     projectName: string,
@@ -174,6 +198,17 @@ export interface IFileSystemService {
   fileExists(filePath: string): boolean;
   readFileContent(filePath: string): string | null;
   writeFileContent(filePath: string, content: string): Promise<boolean>;
+  replaceTextInFile(
+    filePath: string,
+    oldText: string,
+    newText: string
+  ): Promise<{ success: boolean; content: string | null }>;
+  replaceLinesByNumber(
+    filePath: string,
+    startLine: number,
+    endLine: number,
+    content: string
+  ): Promise<{ success: boolean; content: string | null }>;
   isTypeScriptFile(file: { path: string; extension: string }): boolean;
   isSupportedExtension(extension: string): boolean;
 }
