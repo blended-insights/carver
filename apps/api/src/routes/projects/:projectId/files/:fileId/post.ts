@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import logger from '@/utils/logger';
-import { neo4jService, queueService } from '@/services';
+import { neo4jService, redisService, queueService, fileSystemService } from '@/services';
 
 const router = Router({ mergeParams: true });
 
@@ -23,7 +23,7 @@ router.post('/', async (req: Request, res: Response) => {
     }
 
     logger.info(
-      `Queueing file ${fileId} for creation/update in project: ${projectId}`
+      `Processing file ${fileId} for creation/update in project: ${projectId}`
     );
 
     // Get project path from Neo4j
@@ -37,6 +37,13 @@ router.post('/', async (req: Request, res: Response) => {
     }
 
     const diskPath = project.path;
+
+    // Calculate hash for the file content
+    const hash = fileSystemService.calculateHash(content);
+
+    // First store the file data in Redis 
+    logger.debug(`Storing file data in Redis for ${fileId} in project ${projectId}`);
+    await redisService.storeFileData(projectId, fileId, content, hash);
 
     // Add file processing job to queue
     const job = await queueService.addFileJob(
@@ -56,10 +63,10 @@ router.post('/', async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    logger.error(`Error queueing file for creation/update:`, error);
+    logger.error(`Error creating/updating file:`, error);
     return res.status(500).json({
       success: false,
-      message: `Error queueing file for processing: ${
+      message: `Error creating/updating file: ${
         error instanceof Error ? error.message : String(error)
       }`,
     });

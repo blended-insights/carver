@@ -4,6 +4,7 @@ The Carver API package provides a RESTful API for the Carver codebase assistant 
 
 ## Recent Updates
 
+- **April 12, 2025**: Enhanced file creation/update endpoint to store file data in Redis before queueing. This improves reliability by ensuring file data is persisted even if the queue processing is delayed or fails.
 - **April 11, 2025**: Fixed reliability issue in the file processing queue where jobs would occasionally not be executed. Implemented a robust Redis-based locking mechanism and sequential job processing to ensure 100% job execution.
 - **April 10, 2025**: Fixed bug in GET_DIRECTORY_TREE_BY_PATH query to correctly return a recursive directory tree with all children and their descendants. The query now uses a similar approach to GET_ITEMS_BY_DIRECTORY but retrieves the entire subtree.
 - **April 10, 2025**: Enhanced file editing endpoint to improve reliability when text replacement fails. Now validates text replacements against Redis content and provides content previews when matches fail.
@@ -83,6 +84,7 @@ This approach makes the route organization more modular and maintainable.
 
 The API implements a reliable queue system for file operations to handle high request volumes and prevent race conditions:
 
+- **Redis First Storage**: Files are immediately stored in Redis before being added to the processing queue
 - **Bull Queue**: Background processing with automatic retries and failure handling
 - **Redis Locking**: Prevents race conditions with a simple, robust locking mechanism
 - **Sequential Processing**: Ensures jobs are processed one at a time
@@ -139,6 +141,9 @@ The API implements REST-compliant search functionality on the `/projects/:projec
   - Example: `/projects/myproject/files/src/main.ts?fields=content,hash`
 - `POST /projects/:projectId/files/:fileId` - Create or update a file through the queue system
   - Request Body: JSON object with `content` property
+  - Process Flow:
+    - File data is immediately stored in Redis for quick access
+    - File processing job is then added to the queue for disk write
   - Response:
     - 202 Accepted with a job ID for status tracking
   - Example: `POST /projects/myproject/files/src/main.ts` with `{"content": "console.log('hello');"}`
