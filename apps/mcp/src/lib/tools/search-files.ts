@@ -22,11 +22,11 @@ const searchFilesTool: ToolFunction<SearchFilesProps> = async ({
 }) => {
   try {
     const apiClient = getApiClient();
-    const searchResults = await apiClient.getProjectFiles(
+    const searchResults = await apiClient.getProjectFiles({
       projectName,
       searchTerm,
-      searchType
-    );
+      searchType,
+    });
 
     // Return the search results as a formatted result
     return {

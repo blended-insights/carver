@@ -1,8 +1,4 @@
-import {
-  create,
-  isAxiosError,
-  type AxiosInstance,
-} from 'axios';
+import { create, isAxiosError, type AxiosInstance } from 'axios';
 
 /**
  * Type definition for API response structure
@@ -76,6 +72,107 @@ interface WriteFileResponse {
 }
 
 /**
+ * Base parameters for API requests
+ */
+interface BaseParams {
+  projectName: string;
+}
+
+/**
+ * Parameters for getProjectFiles
+ */
+interface GetProjectFilesParams extends BaseParams {
+  searchTerm?: string;
+  searchType?: 'function' | 'import' | 'directory';
+}
+
+/**
+ * Parameters for getProjectFile
+ */
+interface GetProjectFileParams extends BaseParams {
+  filePath: string;
+  fields?: Array<'content' | 'hash' | 'lastModified'>;
+}
+
+/**
+ * Parameters for getFileImports
+ */
+interface GetFileImportsParams extends BaseParams {
+  filePath: string;
+}
+
+/**
+ * Parameters for writeProjectFile
+ */
+interface WriteProjectFileParams extends BaseParams {
+  filePath: string;
+  content: string;
+}
+
+/**
+ * Parameters for updateProjectFile
+ */
+interface UpdateProjectFileParams extends BaseParams {
+  filePath: string;
+  oldText: string;
+  newText: string;
+}
+
+/**
+ * Parameters for getProjectFolders
+ */
+interface GetProjectFoldersParams extends BaseParams {
+  searchTerm?: string;
+}
+
+/**
+ * Parameters for getProjectFolder
+ */
+interface GetProjectFolderParams extends BaseParams {
+  folderPath: string;
+}
+
+/**
+ * Parameters for getFilesInFolder
+ */
+interface GetFilesInFolderParams extends BaseParams {
+  folderPath: string;
+}
+
+/**
+ * Parameters for getFolderItems
+ */
+interface GetFolderItemsParams extends BaseParams {
+  folderPath: string;
+}
+
+/**
+ * Parameters for getFolderTree
+ */
+interface GetFolderTreeParams extends BaseParams {
+  folderPath: string;
+  depth?: number;
+}
+
+/**
+ * Parameters for createProjectFolder
+ */
+interface CreateProjectFolderParams extends BaseParams {
+  folderPath: string;
+}
+
+/**
+ * Parameters for patchProjectFile
+ */
+export interface PatchProjectFileParams extends BaseParams {
+  filePath: string;
+  startLine: number;
+  endLine?: number;
+  content?: string;
+  operation?: 'replace' | 'insert' | 'delete';
+}
+
+/**
  * Carver API client
  */
 export class CarverApiClient {
@@ -143,30 +240,28 @@ export class CarverApiClient {
 
   /**
    * Get all files for a project
-   * @param projectId The project identifier
-   * @param searchTerm Optional search term to filter files
-   * @param searchType Optional search type (function, import, directory)
+   * @param params Parameters for getProjectFiles
    * @returns Array of project files
    */
-  async getProjectFiles(
-    projectId: string,
-    searchTerm?: string,
-    searchType?: 'function' | 'import' | 'directory'
-  ): Promise<ProjectFile[]> {
+  async getProjectFiles({
+    projectName,
+    searchTerm,
+    searchType,
+  }: GetProjectFilesParams): Promise<ProjectFile[]> {
     try {
-      const params: Record<string, string> = {};
+      const queryParams: Record<string, string> = {};
 
       // Add search parameters if provided
       if (searchTerm) {
-        params.search = searchTerm;
+        queryParams.search = searchTerm;
         if (searchType) {
-          params.type = searchType;
+          queryParams.type = searchType;
         }
       }
 
       const response = await this.client.get<ApiResponse<ProjectFile[]>>(
-        `/projects/${projectId}/files`,
-        { params }
+        `/projects/${projectName}/files`,
+        { params: queryParams }
       );
 
       if (response.data.success && response.data.data) {
@@ -187,26 +282,20 @@ export class CarverApiClient {
 
   /**
    * Get a specific file from a project with selected fields
-   * @param projectId The project identifier
-   * @param fileId The file path within the project
-   * @param fields Array of fields to include (content, hash, lastModified)
+   * @param params Parameters for getProjectFile
    * @returns File content with requested fields
    */
-  async getProjectFile(
-    projectId: string,
-    fileId: string,
-    fields: Array<'content' | 'hash' | 'lastModified'> = [
-      'content',
-      'hash',
-      'lastModified',
-    ]
-  ): Promise<ProjectFileContent> {
+  async getProjectFile({
+    projectName,
+    filePath,
+    fields = ['content', 'hash', 'lastModified'],
+  }: GetProjectFileParams): Promise<ProjectFileContent> {
     try {
       // URL encode the file path to handle special characters correctly
-      const encodedFileId = encodeURIComponent(fileId);
+      const encodedfilePath = encodeURIComponent(filePath);
 
       const response = await this.client.get<ApiResponse<ProjectFileContent>>(
-        `/projects/${projectId}/files/${encodedFileId}`,
+        `/projects/${projectName}/files/${encodedfilePath}`,
         { params: { fields: fields.join(',') } }
       );
 
@@ -224,20 +313,19 @@ export class CarverApiClient {
 
   /**
    * Get imports for a specific file from a project
-   * @param projectId The project identifier
-   * @param fileId The file path within the project
+   * @param params Parameters for getFileImports
    * @returns FileImports object containing an array of import sources
    */
-  async getFileImports(
-    projectId: string,
-    fileId: string
-  ): Promise<FileImports> {
+  async getFileImports({
+    filePath,
+    projectName,
+  }: GetFileImportsParams): Promise<FileImports> {
     try {
       // URL encode the file path to handle special characters correctly
-      const encodedFileId = encodeURIComponent(fileId);
+      const encodedfilePath = encodeURIComponent(filePath);
 
       const response = await this.client.get<ApiResponse<string[]>>(
-        `/projects/${projectId}/files/${encodedFileId}/imports`
+        `/projects/${projectName}/files/${encodedfilePath}/imports`
       );
 
       if (response.data.success && response.data.data) {
@@ -250,29 +338,27 @@ export class CarverApiClient {
       );
     } catch (error) {
       // Log and rethrow the error for handling by the caller
-      console.error(`Error fetching imports for file ${fileId}:`, error);
+      console.error(`Error fetching imports for file ${filePath}:`, error);
       throw error;
     }
   }
 
   /**
    * Write content to a file in a project
-   * @param projectId The project identifier
-   * @param fileId The file path within the project
-   * @param content The content to write to the file
+   * @param params Parameters for writeProjectFile
    * @returns WriteFileResponse object with job information
    */
-  async writeProjectFile(
-    projectId: string,
-    fileId: string,
-    content: string
-  ): Promise<WriteFileResponse> {
+  async writeProjectFile({
+    projectName,
+    filePath,
+    content,
+  }: WriteProjectFileParams): Promise<WriteFileResponse> {
     try {
       // URL encode the file path to handle special characters correctly
-      const encodedFileId = encodeURIComponent(fileId);
+      const encodedfilePath = encodeURIComponent(filePath);
 
       const response = await this.client.post<ApiResponse<WriteFileResponse>>(
-        `/projects/${projectId}/files/${encodedFileId}`,
+        `/projects/${projectName}/files/${encodedfilePath}`,
         { content }
       );
 
@@ -283,30 +369,28 @@ export class CarverApiClient {
       throw new Error(response.data.message || 'Failed to write file');
     } catch (error) {
       // Log and rethrow the error for handling by the caller
-      console.error(`Error writing file ${fileId}:`, error);
+      console.error(`Error writing file ${filePath}:`, error);
       throw error;
     }
   }
 
   /**
    * Update content of an existing file in a project (PUT method)
-   * @param projectId The project identifier
-   * @param fileId The file path within the project
-   * @param content The new content to replace the existing file content
+   * @param params Parameters for updateProjectFile
    * @returns WriteFileResponse object with job information
    */
-  async updateProjectFile(
-    projectId: string,
-    fileId: string,
-    oldText: string,
-    newText: string
-  ): Promise<WriteFileResponse> {
+  async updateProjectFile({
+    projectName,
+    filePath,
+    oldText,
+    newText,
+  }: UpdateProjectFileParams): Promise<WriteFileResponse> {
     try {
       // URL encode the file path to handle special characters correctly
-      const encodedFileId = encodeURIComponent(fileId);
+      const encodedfilePath = encodeURIComponent(filePath);
 
       const response = await this.client.put<ApiResponse<WriteFileResponse>>(
-        `/projects/${projectId}/files/${encodedFileId}`,
+        `/projects/${projectName}/files/${encodedfilePath}`,
         { oldText, newText }
       );
 
@@ -317,32 +401,31 @@ export class CarverApiClient {
       throw new Error(response.data.message || 'Failed to update file');
     } catch (error) {
       // Log and rethrow the error for handling by the caller
-      console.error(`Error updating file ${fileId}:`, error);
+      console.error(`Error updating file ${filePath}:`, error);
       throw error;
     }
   }
 
   /**
    * Get all folders for a project
-   * @param projectId The project identifier
-   * @param searchTerm Optional search term to filter folders
+   * @param params Parameters for getProjectFolders
    * @returns Array of project folders
    */
-  async getProjectFolders(
-    projectId: string,
-    searchTerm?: string
-  ): Promise<ProjectFolder[]> {
+  async getProjectFolders({
+    projectName,
+    searchTerm,
+  }: GetProjectFoldersParams): Promise<ProjectFolder[]> {
     try {
-      const params: Record<string, string> = {};
+      const queryParams: Record<string, string> = {};
 
       // Add search parameter if provided
       if (searchTerm) {
-        params.search = searchTerm;
+        queryParams.search = searchTerm;
       }
 
       const response = await this.client.get<ApiResponse<ProjectFolder[]>>(
-        `/projects/${projectId}/folders`,
-        { params }
+        `/projects/${projectName}/folders`,
+        { params: queryParams }
       );
 
       if (response.data.success && response.data.data) {
@@ -363,20 +446,19 @@ export class CarverApiClient {
 
   /**
    * Get a specific folder from a project
-   * @param projectId The project identifier
-   * @param folderId The folder path within the project
+   * @param params Parameters for getProjectFolder
    * @returns Folder information or null if not found
    */
-  async getProjectFolder(
-    projectId: string,
-    folderId: string
-  ): Promise<ProjectFolder | null> {
+  async getProjectFolder({
+    projectName,
+    folderPath,
+  }: GetProjectFolderParams): Promise<ProjectFolder | null> {
     try {
       // URL encode the folder path to handle special characters correctly
-      const encodedFolderId = encodeURIComponent(folderId);
+      const encodedfolderPath = encodeURIComponent(folderPath);
 
       const response = await this.client.get<ApiResponse<ProjectFolder>>(
-        `/projects/${projectId}/folders/${encodedFolderId}`
+        `/projects/${projectName}/folders/${encodedfolderPath}`
       );
 
       if (response.data.success && response.data.data) {
@@ -389,27 +471,26 @@ export class CarverApiClient {
       if (isAxiosError(error) && error.response?.status === 404) {
         return null;
       }
-      console.error(`Error fetching folder ${folderId}:`, error);
+      console.error(`Error fetching folder ${folderPath}:`, error);
       throw error;
     }
   }
 
   /**
    * Get all files in a specific folder
-   * @param projectId The project identifier
-   * @param folderId The folder path within the project
+   * @param params Parameters for getFilesInFolder
    * @returns Array of project files in the folder
    */
-  async getFilesInFolder(
-    projectId: string,
-    folderId: string
-  ): Promise<ProjectFile[]> {
+  async getFilesInFolder({
+    projectName,
+    folderPath,
+  }: GetFilesInFolderParams): Promise<ProjectFile[]> {
     try {
       // URL encode the folder path to handle special characters correctly
-      const encodedFolderId = encodeURIComponent(folderId);
+      const encodedfolderPath = encodeURIComponent(folderPath);
 
       const response = await this.client.get<ApiResponse<ProjectFile[]>>(
-        `/projects/${projectId}/folders/${encodedFolderId}/files`
+        `/projects/${projectName}/folders/${encodedfolderPath}/files`
       );
 
       if (response.data.success && response.data.data) {
@@ -424,28 +505,27 @@ export class CarverApiClient {
         // Return empty array for not found, which is a common case
         return [];
       }
-      console.error(`Error fetching files in folder ${folderId}:`, error);
+      console.error(`Error fetching files in folder ${folderPath}:`, error);
       throw error;
     }
   }
 
   /**
    * Get all items (files and folders) in a specific folder
-   * @param projectId The project identifier
-   * @param folderId The folder path within the project
+   * @param params Parameters for getFolderItems
    * @returns Array of project files and folders in the folder
    */
-  async getFolderItems(
-    projectId: string,
-    folderId: string
-  ): Promise<Array<ProjectFile | ProjectFolder>> {
+  async getFolderItems({
+    projectName,
+    folderPath,
+  }: GetFolderItemsParams): Promise<Array<ProjectFile | ProjectFolder>> {
     try {
       // URL encode the folder path to handle special characters correctly
-      const encodedFolderId = encodeURIComponent(folderId);
+      const encodedfolderPath = encodeURIComponent(folderPath);
 
       const response = await this.client.get<
         ApiResponse<Array<ProjectFile | ProjectFolder>>
-      >(`/projects/${projectId}/folders/${encodedFolderId}/items`);
+      >(`/projects/${projectName}/folders/${encodedfolderPath}/items`);
 
       if (response.data.success && response.data.data) {
         return response.data.data;
@@ -459,36 +539,34 @@ export class CarverApiClient {
         // Return empty array for not found, which is a common case
         return [];
       }
-      console.error(`Error fetching items in folder ${folderId}:`, error);
+      console.error(`Error fetching items in folder ${folderPath}:`, error);
       throw error;
     }
   }
 
   /**
    * Get a recursive tree view of a specific folder
-   * @param projectId The project identifier
-   * @param folderId The folder path within the project
-   * @param depth Optional maximum depth of recursion
+   * @param params Parameters for getFolderTree
    * @returns Recursive tree structure of folder contents
    */
-  async getFolderTree(
-    projectId: string,
-    folderId: string,
-    depth?: number
-  ): Promise<FolderTreeItem> {
+  async getFolderTree({
+    projectName,
+    folderPath,
+    depth,
+  }: GetFolderTreeParams): Promise<FolderTreeItem> {
     try {
       // URL encode the folder path to handle special characters correctly
-      const encodedFolderId = encodeURIComponent(folderId);
+      const encodedfolderPath = encodeURIComponent(folderPath);
 
       // Prepare query parameters
-      const params: Record<string, string | number> = {};
+      const queryParams: Record<string, string | number> = {};
       if (depth !== undefined) {
-        params.depth = depth;
+        queryParams.depth = depth;
       }
 
       const response = await this.client.get<ApiResponse<FolderTreeItem>>(
-        `/projects/${projectId}/folders/${encodedFolderId}/tree`,
-        { params }
+        `/projects/${projectName}/folders/${encodedfolderPath}/tree`,
+        { params: queryParams }
       );
 
       if (response.data.success && response.data.data) {
@@ -502,13 +580,93 @@ export class CarverApiClient {
       if (isAxiosError(error) && error.response?.status === 404) {
         // Return a minimal empty tree structure for not found
         return {
-          name: folderId,
+          name: folderPath,
           type: 'directory',
-          path: folderId,
+          path: folderPath,
           children: [],
         };
       }
-      console.error(`Error fetching tree for folder ${folderId}:`, error);
+      console.error(`Error fetching tree for folder ${folderPath}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new folder in a project
+   * @param params Parameters for createProjectFolder
+   * @returns Job object with creation information
+   */
+  async createProjectFolder({
+    projectName,
+    folderPath,
+  }: CreateProjectFolderParams): Promise<{ jobId: string; path: string }> {
+    try {
+      const response = await this.client.post<
+        ApiResponse<{ jobId: string; path: string }>
+      >(`/projects/${projectName}/folders`, { folderPath });
+
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+
+      throw new Error(response.data.message || 'Failed to create folder');
+    } catch (error) {
+      // Log and rethrow the error for handling by the caller
+      console.error(`Error creating folder ${folderPath}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update a file in a project using PATCH operations
+   * @param params Parameters for patchProjectFile
+   * @returns WriteFileResponse object with job information
+   */
+  async patchProjectFile({
+    projectName,
+    filePath,
+    startLine,
+    endLine,
+    content,
+    operation = 'replace',
+  }: PatchProjectFileParams): Promise<WriteFileResponse> {
+    try {
+      // URL encode the file path to handle special characters correctly
+      const encodedfilePath = encodeURIComponent(filePath);
+
+      // Prepare the request payload
+      const payload: {
+        startLine: number;
+        endLine?: number;
+        content?: string;
+        operation: 'replace' | 'insert' | 'delete';
+      } = {
+        startLine,
+        operation,
+      };
+
+      // Add optional parameters as needed
+      if (endLine !== undefined) {
+        payload.endLine = endLine;
+      }
+
+      if (content !== undefined) {
+        payload.content = content;
+      }
+
+      const response = await this.client.patch<ApiResponse<WriteFileResponse>>(
+        `/projects/${projectName}/files/${encodedfilePath}`,
+        payload
+      );
+
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+
+      throw new Error(response.data.message || 'Failed to patch file');
+    } catch (error) {
+      // Log and rethrow the error for handling by the caller
+      console.error(`Error patching file ${filePath}:`, error);
       throw error;
     }
   }

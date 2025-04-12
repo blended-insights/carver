@@ -4,29 +4,29 @@ import { getApiClient } from '@/lib/services';
 
 interface GetFolderTreeProps {
   projectName: string;
-  folderId: string;
+  folderPath: string;
   depth?: number;
 }
 
 /**
  * Tool function to get a recursive tree view of a project folder
  * @param projectName Name of the project
- * @param folderId Path of the folder to retrieve tree for
+ * @param folderPath Path of the folder to retrieve tree for
  * @param depth Optional depth of recursion (defaults to full recursion)
  * @returns Recursive tree structure of folder contents
  */
 const getFolderTreeTool: ToolFunction<GetFolderTreeProps> = async ({
   projectName,
-  folderId,
+  folderPath,
   depth,
 }) => {
   try {
     const apiClient = getApiClient();
-    const folderTree = await apiClient.getFolderTree(
+    const folderTree = await apiClient.getFolderTree({
       projectName,
-      folderId,
-      depth
-    );
+      folderPath,
+      depth,
+    });
 
     // Return the folder tree as a formatted result
     return {
@@ -46,7 +46,7 @@ const getFolderTreeTool: ToolFunction<GetFolderTreeProps> = async ({
           text: JSON.stringify(
             {
               error: true,
-              message: `Failed to retrieve folder tree for ${folderId}: ${
+              message: `Failed to retrieve folder tree for ${folderPath}: ${
                 error instanceof Error ? error.message : String(error)
               }`,
             },
@@ -69,7 +69,7 @@ export function registerGetFolderTreeTool(server: McpServer) {
     "Get a recursive tree view of a project folder's contents.",
     {
       projectName: z.string().describe('The name of the project.'),
-      folderId: z
+      folderPath: z
         .string()
         .describe('The path of the folder to retrieve tree for.'),
       // depth: z.number().int().positive().optional().describe('Optional maximum depth of recursion. Defaults to full recursion.'),

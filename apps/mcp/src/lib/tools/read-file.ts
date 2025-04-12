@@ -22,25 +22,39 @@ const readFileTool: ToolFunction<ReadFileProps> = async ({
 }) => {
   try {
     const apiClient = getApiClient();
-    const fileData = await apiClient.getProjectFile(projectName, filePath, fields);
-    
+    const fileData = await apiClient.getProjectFile({
+      projectName,
+      filePath,
+      fields,
+    });
+
     // Return the file data as a formatted result
-    return { 
-      content: [{ 
-        type: 'text', 
-        text: JSON.stringify(fileData, null, 2) 
-      }] 
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(fileData, null, 2),
+        },
+      ],
     };
   } catch (error) {
     // Return the error as a formatted result
-    return { 
-      content: [{ 
-        type: 'text', 
-        text: JSON.stringify({ 
-          error: true, 
-          message: `Failed to read file ${filePath}: ${error instanceof Error ? error.message : String(error)}` 
-        }, null, 2) 
-      }] 
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(
+            {
+              error: true,
+              message: `Failed to read file ${filePath}: ${
+                error instanceof Error ? error.message : String(error)
+              }`,
+            },
+            null,
+            2
+          ),
+        },
+      ],
     };
   }
 };
@@ -56,9 +70,12 @@ export function registerReadFileTool(server: McpServer) {
     {
       projectName: z.string().describe('The name of the project.'),
       filePath: z.string().describe('The path of the file to read.'),
-      fields: z.array(
-        z.enum(['content', 'hash', 'lastModified'])
-      ).optional().describe('Optional fields to include. Defaults to all fields if not specified.'),
+      fields: z
+        .array(z.enum(['content', 'hash', 'lastModified']))
+        .optional()
+        .describe(
+          'Optional fields to include. Defaults to all fields if not specified.'
+        ),
     },
     readFileTool
   );

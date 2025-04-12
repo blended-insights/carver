@@ -27,12 +27,12 @@ const editFileTool: ToolFunction<EditFileProps> = async ({
     const apiClient = getApiClient();
 
     // Write the updated content back to the file
-    const result = await apiClient.updateProjectFile(
+    const result = await apiClient.updateProjectFile({
       projectName,
       filePath,
       oldText,
-      newText
-    );
+      newText,
+    });
 
     // Return the result as a formatted response
     return {

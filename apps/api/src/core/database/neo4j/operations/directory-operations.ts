@@ -257,7 +257,7 @@ export class DirectoryOperations {
             path: record.get('path'),
             name: record.get('name'),
             type: record.get('type'),
-            extension: record.get('extension'),
+            extension: record.get('extension') || undefined,
           };
 
           // Remove extension if it's undefined (for directories)

@@ -20,9 +20,11 @@ import {
   registerSearchFilesTool,
   registerGetFileImportsTool,
   registerWriteFileTool,
-  registerEditFileTool,
+  // registerEditFileTool,
   registerGetFolderTreeTool,
   registerGetFolderItemsTool,
+  registerCreateFolderTool,
+  registerUpdateFileTool,
 } from './lib/tools';
 
 // Import resource registrations from resources module
@@ -46,7 +48,7 @@ const server = new McpServer({
 registerCarverProjectFilesResource(server);
 
 // Register file operation tools
-registerEditFileTool(server); // Tool for editing file content
+// registerEditFileTool(server); // Tool for editing file content
 registerGetFileImportsTool(server); // Tool for extracting imports from files
 registerGetFolderItemsTool(server); // Tool for retrieving folder items
 registerGetFolderTreeTool(server); // Tool for retrieving folder tree
@@ -54,6 +56,8 @@ registerReadFileTool(server); // Tool for reading single files
 registerReadMultipleFilesTool(server); // Tool for reading multiple files at once
 registerSearchFilesTool(server); // Tool for searching file contents
 registerWriteFileTool(server); // Tool for writing file content
+registerCreateFolderTool(server); // Tool for creating folders
+registerUpdateFileTool(server); // Tool for updating files using PATCH operations
 
 /**
  * Main function that initializes and starts the server

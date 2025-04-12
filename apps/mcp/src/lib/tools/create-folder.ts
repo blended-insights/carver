@@ -2,30 +2,28 @@ import z from 'zod';
 import type { McpServer, ToolFunction } from '.';
 import { getApiClient } from '@/lib/services';
 
-interface WriteFileProps {
-  filePath: string;
+interface CreateFolderProps {
   projectName: string;
-  content: string;
+  folderPath: string;
 }
 
 /**
- * Tool function to write a file to a project
- * @param filePath Path of the file to write
+ * Tool function to create a folder in a project
  * @param projectName Name of the project
- * @param content Content to write to the file
+ * @param folderPath Path of the folder to create
  * @returns Content object with the result of the operation
  */
-const writeFileTool: ToolFunction<WriteFileProps> = async ({
-  filePath,
+const createFolderTool: ToolFunction<CreateFolderProps> = async ({
   projectName,
-  content,
+  folderPath,
 }) => {
   try {
     const apiClient = getApiClient();
-    const result = await apiClient.writeProjectFile({
+
+    // Call the API endpoint to create the folder
+    const response = await apiClient.createProjectFolder({
       projectName,
-      filePath,
-      content,
+      folderPath,
     });
 
     // Return the result as a formatted response
@@ -33,7 +31,15 @@ const writeFileTool: ToolFunction<WriteFileProps> = async ({
       content: [
         {
           type: 'text',
-          text: JSON.stringify(result, null, 2),
+          text: JSON.stringify(
+            {
+              success: true,
+              message: `Folder ${folderPath} successfully created in project ${projectName}.`,
+              data: response,
+            },
+            null,
+            2
+          ),
         },
       ],
     };
@@ -46,7 +52,7 @@ const writeFileTool: ToolFunction<WriteFileProps> = async ({
           text: JSON.stringify(
             {
               error: true,
-              message: `Failed to write file ${filePath}: ${
+              message: `Failed to create folder ${folderPath}: ${
                 error instanceof Error ? error.message : String(error)
               }`,
             },
@@ -60,18 +66,17 @@ const writeFileTool: ToolFunction<WriteFileProps> = async ({
 };
 
 /**
- * Register the write-file tool with the MCP server
+ * Register the create-folder tool with the MCP server
  * @param server MCP server instance
  */
-export function registerWriteFileTool(server: McpServer) {
+export function registerCreateFolderTool(server: McpServer) {
   server.tool(
-    'carver-write-file',
-    'Write content to a file in a project.',
+    'carver-create-folder',
+    'Create a new folder in a project.',
     {
       projectName: z.string().describe('The name of the project.'),
-      filePath: z.string().describe('The path of the file to write.'),
-      content: z.string().describe('Content to write to the file.'),
+      folderPath: z.string().describe('The path of the folder to create.'),
     },
-    writeFileTool
+    createFolderTool
   );
 }

@@ -19,25 +19,38 @@ const getFileImportsTool: ToolFunction<GetFileImportsProps> = async ({
 }) => {
   try {
     const apiClient = getApiClient();
-    const fileImports = await apiClient.getFileImports(projectName, filePath);
-    
+    const fileImports = await apiClient.getFileImports({
+      projectName,
+      filePath,
+    });
+
     // Return the import data as a formatted result
-    return { 
-      content: [{ 
-        type: 'text', 
-        text: JSON.stringify(fileImports, null, 2) 
-      }] 
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(fileImports, null, 2),
+        },
+      ],
     };
   } catch (error) {
     // Return the error as a formatted result
-    return { 
-      content: [{ 
-        type: 'text', 
-        text: JSON.stringify({ 
-          error: true, 
-          message: `Failed to get imports for file ${filePath}: ${error instanceof Error ? error.message : String(error)}` 
-        }, null, 2) 
-      }] 
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(
+            {
+              error: true,
+              message: `Failed to get imports for file ${filePath}: ${
+                error instanceof Error ? error.message : String(error)
+              }`,
+            },
+            null,
+            2
+          ),
+        },
+      ],
     };
   }
 };
@@ -52,7 +65,9 @@ export function registerGetFileImportsTool(server: McpServer) {
     'Get imports from a specific file in a project.',
     {
       projectName: z.string().describe('The name of the project.'),
-      filePath: z.string().describe('The path of the file to get imports from.'),
+      filePath: z
+        .string()
+        .describe('The path of the file to get imports from.'),
     },
     getFileImportsTool
   );

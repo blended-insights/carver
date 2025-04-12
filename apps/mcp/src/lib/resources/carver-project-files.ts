@@ -20,10 +20,12 @@ const listResources: ListResourcesCallback = async () => {
 
 const readResources: ReadResourceTemplateCallback = async (
   uri,
-  { projectId }
+  { projectName }
 ) => {
   const apiClient = getApiClient();
-  const files = await apiClient.getProjectFiles(projectId.toString());
+  const files = await apiClient.getProjectFiles({
+    projectName: projectName.toString(),
+  });
 
   return {
     contents: files.map((file) => ({
@@ -37,7 +39,7 @@ const readResources: ReadResourceTemplateCallback = async (
 export function registerCarverProjectFilesResource(server: McpServer) {
   server.resource(
     'carver-project-files',
-    new ResourceTemplate('project://{projectId}/files', {
+    new ResourceTemplate('project://{projectName}/files', {
       list: listResources,
     }),
     readResources

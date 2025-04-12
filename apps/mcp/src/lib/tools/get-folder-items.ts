@@ -4,22 +4,25 @@ import { getApiClient } from '@/lib/services';
 
 interface GetFolderItemsProps {
   projectName: string;
-  folderId: string;
+  folderPath: string;
 }
 
 /**
  * Tool function to get items (files and folders) in a specific project folder
  * @param projectName Name of the project
- * @param folderId Path of the folder to retrieve items from
+ * @param folderPath Path of the folder to retrieve items from
  * @returns List of items in the folder
  */
 const getFolderItemsTool: ToolFunction<GetFolderItemsProps> = async ({
   projectName,
-  folderId,
+  folderPath,
 }) => {
   try {
     const apiClient = getApiClient();
-    const folderItems = await apiClient.getFolderItems(projectName, folderId);
+    const folderItems = await apiClient.getFolderItems({
+      projectName,
+      folderPath,
+    });
 
     // Return the folder items as a formatted result
     return {
@@ -39,7 +42,7 @@ const getFolderItemsTool: ToolFunction<GetFolderItemsProps> = async ({
           text: JSON.stringify(
             {
               error: true,
-              message: `Failed to retrieve folder items for ${folderId}: ${
+              message: `Failed to retrieve folder items for ${folderPath}: ${
                 error instanceof Error ? error.message : String(error)
               }`,
             },
@@ -62,7 +65,7 @@ export function registerGetFolderItemsTool(server: McpServer) {
     'Get items (files and folders) in a specific project folder.',
     {
       projectName: z.string().describe('The name of the project.'),
-      folderId: z
+      folderPath: z
         .string()
         .describe('The path of the folder to retrieve items from.'),
     },

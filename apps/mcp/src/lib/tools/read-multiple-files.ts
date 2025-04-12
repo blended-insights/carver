@@ -18,32 +18,42 @@ interface ReadMultipleFilesProps {
 const readMultipleFilesTool: ToolFunction<ReadMultipleFilesProps> = async ({
   filePaths,
   projectName,
-  fields = ['content', 'hash', 'lastModified'], 
+  fields = ['content', 'hash', 'lastModified'],
 }) => {
   try {
     const apiClient = getApiClient();
     const responses = await Promise.all(
-      filePaths.map((filePath) => apiClient.getProjectFile(projectName, filePath, fields))
+      filePaths.map((filePath) =>
+        apiClient.getProjectFile({ projectName, filePath, fields })
+      )
     );
-    
+
     // Format the response with file paths for easier identification
     const formattedResponses = responses.map((response, index) => ({
       path: filePaths[index],
-      ...response
+      ...response,
     }));
-    
+
     const text = JSON.stringify(formattedResponses, null, 2);
     return { content: [{ type: 'text', text }] };
   } catch (error) {
     // Return the error as a formatted result
-    return { 
-      content: [{ 
-        type: 'text', 
-        text: JSON.stringify({ 
-          error: true, 
-          message: `Failed to read files: ${error instanceof Error ? error.message : String(error)}` 
-        }, null, 2) 
-      }] 
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(
+            {
+              error: true,
+              message: `Failed to read files: ${
+                error instanceof Error ? error.message : String(error)
+              }`,
+            },
+            null,
+            2
+          ),
+        },
+      ],
     };
   }
 };
@@ -61,9 +71,12 @@ export function registerReadMultipleFilesTool(server: McpServer) {
       filePaths: z
         .array(z.string())
         .describe('The paths of the files to read.'),
-      fields: z.array(
-        z.enum(['content', 'hash', 'lastModified'])
-      ).optional().describe('Optional fields to include for each file. Defaults to all fields if not specified.'),
+      fields: z
+        .array(z.enum(['content', 'hash', 'lastModified']))
+        .optional()
+        .describe(
+          'Optional fields to include for each file. Defaults to all fields if not specified.'
+        ),
     },
     readMultipleFilesTool
   );

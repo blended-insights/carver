@@ -35,11 +35,11 @@ const toolUseInstructions: {
     toolName: 'carver-write-file',
     toolUse: 'Read the content of a file.',
   },
-  {
-    toolName: 'carver-edit-file',
-    toolUse: 'Edit the content of a file.',
-    toolParams: { oldText: 'Old Text', newText: 'New Text' },
-  },
+  // {
+  //   toolName: 'carver-edit-file',
+  //   toolUse: 'Edit the content of a file.',
+  //   toolParams: { oldText: 'Old Text', newText: 'New Text' },
+  // },
   {
     toolName: 'carver-read-multiple-files',
     toolUse:
@@ -67,6 +67,37 @@ const toolUseInstructions: {
     toolParams: { searchTerm: 'search param', searchType: 'directory' },
     toolUse:
       'Tool to search for files present in a DIRECTORY that contains the searchTerm.',
+  },
+  {
+    toolName: 'carver-update-file',
+    toolParams: {
+      operation: 'insert',
+      startLine: 'line to start update',
+      content: 'new content to insert',
+    },
+    toolUse:
+      'Tool to insert next content into existing file by line number.',
+  },
+  {
+    toolName: 'carver-update-file',
+    toolParams: {
+      operation: 'delete',
+      startLine: 'line to start deleting',
+      endLine: 'line to end deleting',
+    },
+    toolUse:
+      'Tool to delete line(s) from a file.',
+  },
+  {
+    toolName: 'carver-update-file',
+    toolParams: {
+      operation: 'replace',
+      startLine: 'line to start update',
+      endLine: 'line to end update',
+      content: 'content to replace',
+    },
+    toolUse:
+      'Tool to replace line(s) in a file.',
   },
 ];
 
