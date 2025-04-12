@@ -8,6 +8,7 @@
     "dev": "npx nx run-many --target=dev --projects=watcher,web",
     "docker-compose:dev": "docker-compose up neo4j redis",
     "docker-compose:up": "docker-compose -f 'docker-compose.yml' up -d --build ",
+    "mcp:build": "npx nx run mcp:build --configuration=production",
     "mcp:dev": "npx nx run mcp:serve --configuration=development",
     "mcp:dev:verbose": "npx nx run mcp:serve --configuration=development",
     "mcp:start": "npx @modelcontextprotocol/inspector node apps/mcp/dist/main.js",
