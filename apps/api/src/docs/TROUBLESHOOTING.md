@@ -4,30 +4,18 @@ This document provides guidance for diagnosing and resolving common issues with 
 
 ## Common Issues
 
-### RedLock Type Compatibility Errors
-
-If you encounter errors related to type compatibility between Redis and RedLock:
-
-```
-Type 'Redis' is not assignable to type 'CompatibleRedisClient'.
-Types of property 'eval' are incompatible.
-```
-
-**Solution:** The application uses a custom adapter (`redlock-adapter.ts`) to bridge the type differences. If you're still seeing issues:
-
-1. Make sure you're using the compatible versions from `dependencies-versions.md`
-2. Try updating the `RedLockAdapter` class in `utils/redlock-adapter.ts` to include any missing methods
-
 ### Queue Not Processing Jobs
 
 If jobs are being added to the queue but not being processed:
 
 **Potential causes:**
+
 - Redis connection issues
 - Bull worker processes not running
 - Error in the job processor function
 
 **Solutions:**
+
 1. Check Redis connectivity: `redis-cli ping` should return `PONG`
 2. Examine logs for queue errors
 3. Inspect queue status:
@@ -44,48 +32,26 @@ If jobs are being added to the queue but not being processed:
    }
    ```
 
-### Deadlocks
-
-If jobs appear to be stuck and never complete:
-
-**Potential causes:**
-- Lock not being released due to an error
-- Lock timeout too short for the operation
-- Redis connection issues causing lock problems
-
-**Solutions:**
-1. Increase the lock timeout in the queue service:
-   ```typescript
-   // Change from 5000ms to something higher
-   lock = await this.redlock.acquire([lockKey], 10000);
-   ```
-2. Check for unreleased locks in Redis:
-   ```
-   redis-cli keys "lock:*"
-   ```
-3. Clear stuck locks if necessary:
-   ```
-   redis-cli del lock:project:projectName:file:filePath
-   ```
-
 ### High Memory Usage
 
 If the application is using excessive memory:
 
 **Potential causes:**
+
 - Too many jobs in the queue
 - Large file content being stored in memory
 - Memory leaks in the job processing cycle
 
 **Solutions:**
+
 1. Limit the number of concurrent jobs:
    ```typescript
    this.fileQueue = new Queue('file-processing', {
      // Add concurrency limiter
      limiter: {
        max: 5,
-       duration: 1000
-     }
+       duration: 1000,
+     },
    });
    ```
 2. Implement streaming for large files instead of loading entire content in memory
@@ -104,11 +70,13 @@ If the application is using excessive memory:
 To monitor the queue health:
 
 1. **Real-time Stats:**
+
    ```typescript
    const stats = await queueService.getStats();
    ```
 
 2. **Active Job Information:**
+
    ```typescript
    const activeJobs = await fileQueue.getActive();
    console.log(`Currently processing ${activeJobs.length} jobs`);
@@ -154,6 +122,7 @@ await queueService.close();
 ```
 
 This will:
+
 1. Wait for active jobs to complete
 2. Stop accepting new jobs
 3. Close the Redis connections

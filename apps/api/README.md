@@ -4,6 +4,7 @@ The Carver API package provides a RESTful API for the Carver codebase assistant 
 
 ## Recent Updates
 
+- **April 11, 2025**: Fixed reliability issue in the file processing queue where jobs would occasionally not be executed. Implemented a robust Redis-based locking mechanism and sequential job processing to ensure 100% job execution.
 - **April 10, 2025**: Fixed bug in GET_DIRECTORY_TREE_BY_PATH query to correctly return a recursive directory tree with all children and their descendants. The query now uses a similar approach to GET_ITEMS_BY_DIRECTORY but retrieves the entire subtree.
 - **April 10, 2025**: Enhanced file editing endpoint to improve reliability when text replacement fails. Now validates text replacements against Redis content and provides content previews when matches fail.
 - **April 08, 2025**: Fixed bug where class methods were not being indexed as separate function nodes. Class methods can now be queried directly using `MATCH (n:Function {name: 'methodName'})` syntax in Neo4j.
@@ -78,6 +79,18 @@ router.use('/restart', restartRouter);
 
 This approach makes the route organization more modular and maintainable.
 
+## File Processing Queue
+
+The API implements a reliable queue system for file operations to handle high request volumes and prevent race conditions:
+
+- **Bull Queue**: Background processing with automatic retries and failure handling
+- **Redis Locking**: Prevents race conditions with a simple, robust locking mechanism
+- **Sequential Processing**: Ensures jobs are processed one at a time
+- **Comprehensive Logging**: Detailed logging of job processing activities
+- **Verification Steps**: File operations include verification to ensure completeness
+
+See the full documentation in `apps/api/src/docs/QUEUE_SYSTEM_UPDATED.md` for details.
+
 ## REST-Compliant Search
 
 The API implements REST-compliant search functionality on the `/projects/:projectId/files` endpoint. Instead of having a separate `/search` endpoint, search functionality is implemented as query parameters on the resource endpoint.
@@ -124,6 +137,13 @@ The API implements REST-compliant search functionality on the `/projects/:projec
 - `GET /projects/:projectId/files/:fileId` - Get a specific file from a project with optional field selection
   - Query Parameters: `fields` - Comma-separated list of fields to include (content, hash, lastModified)
   - Example: `/projects/myproject/files/src/main.ts?fields=content,hash`
+- `POST /projects/:projectId/files/:fileId` - Create or update a file through the queue system
+  - Request Body: JSON object with `content` property
+  - Response:
+    - 202 Accepted with a job ID for status tracking
+  - Example: `POST /projects/myproject/files/src/main.ts` with `{"content": "console.log('hello');"}`
+- `GET /projects/:projectId/files/:fileId/status/:jobId` - Check the status of a queued file operation
+  - Response: Information about the job status including state, result, and timestamps
 - `PUT /projects/:projectId/files/:fileId` - Replace text in a file with improved reliability
   - Request Body: JSON object with `oldText` and `newText` properties
   - Response:
@@ -131,13 +151,6 @@ The API implements REST-compliant search functionality on the `/projects/:projec
     - 400 Bad Request if text to replace was not found in content (includes content preview for debugging)
     - 202 Accepted if file not found in Redis and replacement was queued
   - Example: `PUT /projects/myproject/files/src/main.ts` with `{"oldText": "old code", "newText": "new code"}`
-  - `PUT /projects/:projectId/files/:fileId` - Replace text in a file with improved reliability
-  - Request Body: JSON object with `oldText` and `newText` properties
-  - Response:
-    - 200 OK if text was replaced successfully in Redis
-    - 400 Bad Request if text to replace was not found in content (includes content preview for debugging)
-    - 202 Accepted if file not found in Redis and replacement was queued
-  - Example: `PUT /projects/myproject/files/src/main.ts` with `{\"oldText\": \"old code\", \"newText\": \"new code\"}`
 - `PATCH /projects/:projectId/files/:fileId` - Modify file content by line numbers
   - Request Body: JSON object with:
     - `startLine`: Start line number (1-based, required for all operations)

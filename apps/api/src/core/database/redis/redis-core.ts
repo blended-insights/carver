@@ -1,4 +1,4 @@
-import { Redis } from 'ioredis';
+import { Redis, RedisOptions } from 'ioredis';
 import { IRedisCore } from './interfaces';
 import logger from '@/utils/logger';
 
@@ -12,8 +12,11 @@ export class RedisCore implements IRedisCore {
    * Initialize the Redis connection
    * @param redisUrl Redis connection URL
    */
-  constructor(redisUrl: string = process.env.REDIS_URL || 'redis://localhost:6379') {
-    this.redis = new Redis(redisUrl);
+  constructor(
+    redisUrl: string = process.env.REDIS_URL || 'redis://localhost:6379',
+    config: RedisOptions = {}
+  ) {
+    this.redis = new Redis(redisUrl, config);
     logger.info('Redis connection initialized');
   }
 
