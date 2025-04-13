@@ -66,6 +66,8 @@ The Carver MCP server provides the following tools:
 | `carver-get-file-imports` | Get imports from a specific file in a project |
 | `carver-search-files` | Search for files in a project based on search term and optional search type |
 
+
+
 ### Git Operations
 
 | Tool Name | Description |
@@ -81,6 +83,15 @@ The Carver MCP server provides the following tools:
 | `git_create_branch` | Creates a new branch from an optional base branch |
 | `git_checkout` | Switches branches |
 | `git_show` | Shows the contents of a commit |
+
+### Prompts
+
+The Carver MCP server provides the following prompt generators:
+
+| Prompt Name | Description |
+|-------------|-------------|
+| `carver-bug-report-prompt` | Generates a formatted bug report with description, expected and actual results |
+| `carver-enhancement-prompt` | Generates a formatted enhancement request with description, affected files, and optional justification |
 
 ## Configuration File
 
