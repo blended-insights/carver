@@ -45,7 +45,7 @@ const bugReportPrompt: PromptCallback<Schema> = async (args) => {
         role: 'assistant',
         content: {
           text: generatePrompt(args),
-          resource: `bug://projects/${args.projectName}/bugs/${args.bugName}`,
+          resource: `bug://${args.projectName}/${args.bugName}`,
           type: 'text',
         },
       },
