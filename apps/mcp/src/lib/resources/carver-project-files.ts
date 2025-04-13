@@ -4,11 +4,12 @@ import type {
   McpServer,
   ReadResourceTemplateCallback,
 } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { getApiClient } from '../services';
+import { getApi } from '@/lib/services';
 
 const listResources: ListResourcesCallback = async () => {
-  const apiClient = getApiClient();
-  const projects = await apiClient.getProjects();
+  const api = getApi();
+
+  const projects = await api.projects.getProjects();
   return {
     resources: projects.map((project) => ({
       uri: `project://${project.id}/files`,
@@ -22,8 +23,9 @@ const readResources: ReadResourceTemplateCallback = async (
   uri,
   { projectName }
 ) => {
-  const apiClient = getApiClient();
-  const files = await apiClient.getProjectFiles({
+  const api = getApi();
+
+  const files = await api.files.getProjectFiles({
     projectName: projectName.toString(),
   });
 
