@@ -59,7 +59,7 @@ const bugReportPrompt: PromptCallback<Schema> = async (args) => {
  */
 export function registerBugReportPrompt(server: McpServer) {
   server.prompt(
-    'carver-bug-report-prompt',
+    'carver-bug-report',
     'A prompt generator for creating a bug report.',
     schema,
     bugReportPrompt
