@@ -1,13 +1,18 @@
 import z from 'zod';
-import type { McpServer, ToolFunction } from '..';
 import { getApi } from '@/lib/services';
-import { formatErrorResponse } from '../utils/error-handler';
+import { formatErrorResponse } from '@/lib/tools/utils';
+import type {
+  McpServer,
+  ToolCallback,
+} from '@modelcontextprotocol/sdk/server/mcp.js';
 
-interface WriteFileProps {
-  filePath: string;
-  projectName: string;
-  content: string;
-}
+const schema = {
+  projectName: z.string().describe('The name of the project.'),
+  filePath: z.string().describe('The path of the file to write.'),
+  content: z.string().describe('Content to write to the file.'),
+};
+
+type Schema = typeof schema;
 
 /**
  * Tool function to write a file to a project
@@ -16,7 +21,7 @@ interface WriteFileProps {
  * @param content Content to write to the file
  * @returns Content object with the result of the operation
  */
-const writeFileTool: ToolFunction<WriteFileProps> = async ({
+const writeFileTool: ToolCallback<Schema> = async ({
   filePath,
   projectName,
   content,
@@ -64,14 +69,10 @@ const writeFileTool: ToolFunction<WriteFileProps> = async ({
  * @param server MCP server instance
  */
 export function registerWriteFileTool(server: McpServer) {
-  server.tool(
+  server.tool<Schema>(
     'carver-write-file',
     'Write content to a file in a project.',
-    {
-      projectName: z.string().describe('The name of the project.'),
-      filePath: z.string().describe('The path of the file to write.'),
-      content: z.string().describe('Content to write to the file.'),
-    },
+    schema,
     writeFileTool
   );
 }

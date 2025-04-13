@@ -2,7 +2,7 @@
  * File-related tools for Carver MCP
  */
 
-import type { McpServer } from '..';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 import { registerEditFileTool } from './edit-file';
 import { registerGetFileImportsTool } from './get-file-imports';

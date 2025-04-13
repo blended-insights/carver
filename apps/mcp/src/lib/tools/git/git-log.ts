@@ -1,12 +1,21 @@
 import z from 'zod';
-import type { McpServer, ToolFunction } from '..';
 import { getApi } from '@/lib/services';
-import { formatErrorResponse } from '../utils/error-handler';
+import { formatErrorResponse } from '@/lib/tools/utils';
+import type {
+  McpServer,
+  ToolCallback,
+} from '@modelcontextprotocol/sdk/server/mcp.js';
 
-interface GitLogProps {
-  projectName: string;
-  maxCount?: number;
-}
+const schema = {
+  projectName: z.string().describe('The name of the project'),
+  maxCount: z
+    .number()
+    .optional()
+    .default(10)
+    .describe('Maximum number of commits to return'),
+};
+
+type Schema = typeof schema;
 
 /**
  * Tool function to show commit logs
@@ -14,7 +23,7 @@ interface GitLogProps {
  * @param maxCount Maximum number of commits to return (default: 10)
  * @returns Commit history information
  */
-const gitLogTool: ToolFunction<GitLogProps> = async ({
+const gitLogTool: ToolCallback<Schema> = async ({
   projectName,
   maxCount = 10,
 }) => {
@@ -60,13 +69,10 @@ const gitLogTool: ToolFunction<GitLogProps> = async ({
  * @param server MCP server instance
  */
 export function registerGitLogTool(server: McpServer) {
-  server.tool(
+  server.tool<Schema>(
     'carver-git-log',
     'Shows the commit logs',
-    {
-      projectName: z.string().describe('The name of the project'),
-      maxCount: z.number().optional().default(10).describe('Maximum number of commits to return'),
-    },
+    schema,
     gitLogTool
   );
 }

@@ -1,18 +1,23 @@
 import z from 'zod';
-import type { McpServer, ToolFunction } from '..';
 import { getApi } from '@/lib/services';
-import { formatErrorResponse } from '../utils/error-handler';
+import { formatErrorResponse } from '@/lib/tools/utils';
+import type {
+  McpServer,
+  ToolCallback,
+} from '@modelcontextprotocol/sdk/server/mcp.js';
 
-interface GitDiffUnstagedProps {
-  projectName: string;
-}
+const schema = {
+  projectName: z.string().describe('The name of the project'),
+};
+
+type Schema = typeof schema;
 
 /**
  * Tool function to show changes in the working directory that are not yet staged
  * @param projectName Name of the project
  * @returns Diff output showing unstaged changes
  */
-const gitDiffUnstagedTool: ToolFunction<GitDiffUnstagedProps> = async ({
+const gitDiffUnstagedTool: ToolCallback<Schema> = async ({
   projectName,
 }) => {
   try {
@@ -73,12 +78,10 @@ const gitDiffUnstagedTool: ToolFunction<GitDiffUnstagedProps> = async ({
  * @param server MCP server instance
  */
 export function registerGitDiffUnstagedTool(server: McpServer) {
-  server.tool(
+  server.tool<Schema>(
     'carver-git-diff-unstaged',
     'Shows changes in the working directory that are not yet staged',
-    {
-      projectName: z.string().describe('The name of the project'),
-    },
+    schema,
     gitDiffUnstagedTool
   );
 }

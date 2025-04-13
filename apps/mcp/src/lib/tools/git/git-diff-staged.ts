@@ -1,18 +1,23 @@
 import z from 'zod';
-import type { McpServer, ToolFunction } from '..';
 import { getApi } from '@/lib/services';
-import { formatErrorResponse } from '../utils/error-handler';
+import { formatErrorResponse } from '@/lib/tools/utils';
+import type {
+  McpServer,
+  ToolCallback,
+} from '@modelcontextprotocol/sdk/server/mcp.js';
 
-interface GitDiffStagedProps {
-  projectName: string;
-}
+const schema = {
+  projectName: z.string().describe('The name of the project'),
+};
+
+type Schema = typeof schema;
 
 /**
  * Tool function to show changes that are staged for commit
  * @param projectName Name of the project
  * @returns Diff output showing staged changes
  */
-const gitDiffStagedTool: ToolFunction<GitDiffStagedProps> = async ({
+const gitDiffStagedTool: ToolCallback<Schema> = async ({
   projectName,
 }) => {
   try {
@@ -73,12 +78,10 @@ const gitDiffStagedTool: ToolFunction<GitDiffStagedProps> = async ({
  * @param server MCP server instance
  */
 export function registerGitDiffStagedTool(server: McpServer) {
-  server.tool(
+  server.tool<Schema>(
     'carver-git-diff-staged',
     'Shows changes that are staged for commit',
-    {
-      projectName: z.string().describe('The name of the project'),
-    },
+    schema,
     gitDiffStagedTool
   );
 }

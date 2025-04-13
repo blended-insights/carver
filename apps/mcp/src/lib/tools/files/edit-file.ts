@@ -1,14 +1,19 @@
 import z from 'zod';
-import type { McpServer, ToolFunction } from '..';
 import { getApi } from '@/lib/services';
-import { formatErrorResponse } from '../utils/error-handler';
+import { formatErrorResponse } from '@/lib/tools/utils';
+import type {
+  McpServer,
+  ToolCallback,
+} from '@modelcontextprotocol/sdk/server/mcp.js';
 
-interface EditFileProps {
-  filePath: string;
-  projectName: string;
-  oldText: string;
-  newText: string;
-}
+const schema = {
+  projectName: z.string().describe('The name of the project.'),
+  filePath: z.string().describe('The path of the file to edit.'),
+  oldText: z.string().describe('Text to be replaced.'),
+  newText: z.string().describe('New text to insert.'),
+};
+
+type Schema = typeof schema;
 
 /**
  * Tool function to edit a file in a project by replacing oldText with newText
@@ -18,7 +23,7 @@ interface EditFileProps {
  * @param newText New text to insert
  * @returns Content object with the result of the operation
  */
-const editFileTool: ToolFunction<EditFileProps> = async ({
+const editFileTool: ToolCallback<Schema> = async ({
   filePath,
   projectName,
   oldText,
@@ -70,15 +75,10 @@ const editFileTool: ToolFunction<EditFileProps> = async ({
  * @param server MCP server instance
  */
 export function registerEditFileTool(server: McpServer) {
-  server.tool(
+  server.tool<Schema>(
     'carver-edit-file',
     'Edit a file in a project by replacing oldText with newText.',
-    {
-      projectName: z.string().describe('The name of the project.'),
-      filePath: z.string().describe('The path of the file to edit.'),
-      oldText: z.string().describe('Text to be replaced.'),
-      newText: z.string().describe('New text to insert.'),
-    },
+    schema,
     editFileTool
   );
 }

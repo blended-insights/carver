@@ -1,18 +1,23 @@
 import z from 'zod';
-import type { McpServer, ToolFunction } from '..';
 import { getApi } from '@/lib/services';
-import { formatErrorResponse } from '../utils/error-handler';
+import { formatErrorResponse } from '@/lib/tools/utils';
+import type {
+  McpServer,
+  ToolCallback,
+} from '@modelcontextprotocol/sdk/server/mcp.js';
 
-interface GitStatusProps {
-  projectName: string;
-}
+const schema = {
+  projectName: z.string().describe('The name of the project'),
+};
+
+type Schema = typeof schema;
 
 /**
  * Tool function to get the git status of a project
  * @param projectName Name of the project
  * @returns Status object with git repository information
  */
-const gitStatusTool: ToolFunction<GitStatusProps> = async ({
+const gitStatusTool: ToolCallback<Schema> = async ({
   projectName,
 }) => {
   try {
@@ -59,12 +64,10 @@ const gitStatusTool: ToolFunction<GitStatusProps> = async ({
  * @param server MCP server instance
  */
 export function registerGitStatusTool(server: McpServer) {
-  server.tool(
+  server.tool<Schema>(
     'carver-git-status',
     'Shows the working tree status',
-    {
-      projectName: z.string().describe('The name of the project'),
-    },
+    schema,
     gitStatusTool
   );
 }

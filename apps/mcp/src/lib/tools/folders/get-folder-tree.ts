@@ -1,12 +1,23 @@
 import z from 'zod';
-import type { McpServer, ToolFunction } from '..';
 import { getApi } from '@/lib/services';
+import { formatErrorResponse } from '@/lib/tools/utils';
+import type {
+  McpServer,
+  ToolCallback,
+} from '@modelcontextprotocol/sdk/server/mcp.js';
 
-interface GetFolderTreeProps {
-  projectName: string;
-  folderPath: string;
-  depth?: number;
-}
+const schema = {
+  projectName: z.string().describe('The name of the project.'),
+  folderPath: z.string().describe('The path of the folder to retrieve tree for.'),
+  depth: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe('Optional maximum depth of recursion. Defaults to full recursion.'),
+};
+
+type Schema = typeof schema;
 
 /**
  * Tool function to get a recursive tree view of a project folder
@@ -15,7 +26,7 @@ interface GetFolderTreeProps {
  * @param depth Optional depth of recursion (defaults to full recursion)
  * @returns Recursive tree structure of folder contents
  */
-const getFolderTreeTool: ToolFunction<GetFolderTreeProps> = async ({
+const getFolderTreeTool: ToolCallback<Schema> = async ({
   projectName,
   folderPath,
   depth,
@@ -38,20 +49,14 @@ const getFolderTreeTool: ToolFunction<GetFolderTreeProps> = async ({
       ],
     };
   } catch (error) {
-    // Return the error as a formatted result
+    // Use the shared error handler to format the error
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(
-            {
-              error: true,
-              message: `Failed to retrieve folder tree for ${folderPath}: ${
-                error instanceof Error ? error.message : String(error)
-              }`,
-            },
-            null,
-            2
+          text: formatErrorResponse(
+            error, 
+            `Failed to retrieve folder tree for ${folderPath}`
           ),
         },
       ],
@@ -64,16 +69,10 @@ const getFolderTreeTool: ToolFunction<GetFolderTreeProps> = async ({
  * @param server MCP server instance
  */
 export function registerGetFolderTreeTool(server: McpServer) {
-  server.tool(
+  server.tool<Schema>(
     'carver-get-folder-tree',
     "Get a recursive tree view of a project folder's contents.",
-    {
-      projectName: z.string().describe('The name of the project.'),
-      folderPath: z
-        .string()
-        .describe('The path of the folder to retrieve tree for.'),
-      // depth: z.number().int().positive().optional().describe('Optional maximum depth of recursion. Defaults to full recursion.'),
-    },
+    schema,
     getFolderTreeTool
   );
 }

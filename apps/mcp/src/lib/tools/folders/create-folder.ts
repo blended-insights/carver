@@ -1,12 +1,17 @@
 import z from 'zod';
-import type { McpServer, ToolFunction } from '..';
 import { getApi } from '@/lib/services';
-import { formatErrorResponse } from '../utils/error-handler';
+import { formatErrorResponse } from '@/lib/tools/utils';
+import type {
+  McpServer,
+  ToolCallback,
+} from '@modelcontextprotocol/sdk/server/mcp.js';
 
-interface CreateFolderProps {
-  projectName: string;
-  folderPath: string;
-}
+const schema = {
+  projectName: z.string().describe('The name of the project.'),
+  folderPath: z.string().describe('The path of the folder to create.'),
+};
+
+type Schema = typeof schema;
 
 /**
  * Tool function to create a folder in a project
@@ -14,7 +19,7 @@ interface CreateFolderProps {
  * @param folderPath Path of the folder to create
  * @returns Content object with the result of the operation
  */
-const createFolderTool: ToolFunction<CreateFolderProps> = async ({
+const createFolderTool: ToolCallback<Schema> = async ({
   projectName,
   folderPath,
 }) => {
@@ -62,13 +67,10 @@ const createFolderTool: ToolFunction<CreateFolderProps> = async ({
  * @param server MCP server instance
  */
 export function registerCreateFolderTool(server: McpServer) {
-  server.tool(
+  server.tool<Schema>(
     'carver-create-folder',
     'Create a new folder in a project.',
-    {
-      projectName: z.string().describe('The name of the project.'),
-      folderPath: z.string().describe('The path of the folder to create.'),
-    },
+    schema,
     createFolderTool
   );
 }

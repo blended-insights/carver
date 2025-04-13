@@ -1,13 +1,22 @@
 import z from 'zod';
-import type { McpServer, ToolFunction } from '..';
 import { getApi } from '@/lib/services';
-import { formatErrorResponse } from '../utils/error-handler';
+import { formatErrorResponse } from '@/lib/tools/utils';
+import type {
+  McpServer,
+  ToolCallback,
+} from '@modelcontextprotocol/sdk/server/mcp.js';
 
-interface GitCreateBranchProps {
-  projectName: string;
-  branchName: string;
-  baseBranch?: string | null;
-}
+const schema = {
+  projectName: z.string().describe('The name of the project'),
+  branchName: z.string().describe('Name for the new branch'),
+  baseBranch: z
+    .string()
+    .nullable()
+    .optional()
+    .describe("Optional source branch to create from (defaults to the repository's default branch)"),
+};
+
+type Schema = typeof schema;
 
 /**
  * Tool function to create a new branch
@@ -16,7 +25,7 @@ interface GitCreateBranchProps {
  * @param baseBranch Optional base branch to create from (default: current branch)
  * @returns Result of the branch creation
  */
-const gitCreateBranchTool: ToolFunction<GitCreateBranchProps> = async ({
+const gitCreateBranchTool: ToolCallback<Schema> = async ({
   projectName,
   branchName,
   baseBranch,
@@ -69,14 +78,10 @@ const gitCreateBranchTool: ToolFunction<GitCreateBranchProps> = async ({
  * @param server MCP server instance
  */
 export function registerGitCreateBranchTool(server: McpServer) {
-  server.tool(
+  server.tool<Schema>(
     'carver-git-create-branch',
     'Creates a new branch from an optional base branch',
-    {
-      projectName: z.string().describe('The name of the project'),
-      branchName: z.string().describe('Name for the new branch'),
-      baseBranch: z.string().nullable().optional().describe('Optional source branch to create from (defaults to the repository\'s default branch)'),
-    },
+    schema,
     gitCreateBranchTool
   );
 }

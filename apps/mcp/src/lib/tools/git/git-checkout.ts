@@ -1,12 +1,17 @@
 import z from 'zod';
-import type { McpServer, ToolFunction } from '..';
 import { getApi } from '@/lib/services';
-import { formatErrorResponse } from '../utils/error-handler';
+import { formatErrorResponse } from '@/lib/tools/utils';
+import type {
+  McpServer,
+  ToolCallback,
+} from '@modelcontextprotocol/sdk/server/mcp.js';
 
-interface GitCheckoutProps {
-  projectName: string;
-  branchName: string;
-}
+const schema = {
+  projectName: z.string().describe('The name of the project'),
+  branchName: z.string().describe('Name of the branch to check out'),
+};
+
+type Schema = typeof schema;
 
 /**
  * Tool function to switch branches
@@ -14,7 +19,7 @@ interface GitCheckoutProps {
  * @param branchName Name of the branch to check out
  * @returns Result of the checkout operation
  */
-const gitCheckoutTool: ToolFunction<GitCheckoutProps> = async ({
+const gitCheckoutTool: ToolCallback<Schema> = async ({
   projectName,
   branchName,
 }) => {
@@ -60,13 +65,10 @@ const gitCheckoutTool: ToolFunction<GitCheckoutProps> = async ({
  * @param server MCP server instance
  */
 export function registerGitCheckoutTool(server: McpServer) {
-  server.tool(
+  server.tool<Schema>(
     'carver-git-checkout',
     'Switches branches',
-    {
-      projectName: z.string().describe('The name of the project'),
-      branchName: z.string().describe('Name of the branch to check out'),
-    },
+    schema,
     gitCheckoutTool
   );
 }

@@ -1,12 +1,17 @@
 import z from 'zod';
-import type { McpServer, ToolFunction } from '..';
 import { getApi } from '@/lib/services';
-import { formatErrorResponse } from '../utils/error-handler';
+import { formatErrorResponse } from '@/lib/tools/utils';
+import type {
+  McpServer,
+  ToolCallback,
+} from '@modelcontextprotocol/sdk/server/mcp.js';
 
-interface GitShowProps {
-  projectName: string;
-  revision: string;
-}
+const schema = {
+  projectName: z.string().describe('The name of the project'),
+  revision: z.string().describe('Commit hash or reference'),
+};
+
+type Schema = typeof schema;
 
 /**
  * Tool function to show the contents of a commit
@@ -14,7 +19,7 @@ interface GitShowProps {
  * @param revision Commit hash or reference
  * @returns Information about the specified commit
  */
-const gitShowTool: ToolFunction<GitShowProps> = async ({
+const gitShowTool: ToolCallback<Schema> = async ({
   projectName,
   revision,
 }) => {
@@ -73,13 +78,10 @@ const gitShowTool: ToolFunction<GitShowProps> = async ({
  * @param server MCP server instance
  */
 export function registerGitShowTool(server: McpServer) {
-  server.tool(
+  server.tool<Schema>(
     'carver-git-show',
     'Shows the contents of a commit',
-    {
-      projectName: z.string().describe('The name of the project'),
-      revision: z.string().describe('Commit hash or reference'),
-    },
+    schema,
     gitShowTool
   );
 }

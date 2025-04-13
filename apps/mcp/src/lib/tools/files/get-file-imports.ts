@@ -1,12 +1,17 @@
 import z from 'zod';
-import type { McpServer, ToolFunction } from '..';
 import { getApi } from '@/lib/services';
-import { formatErrorResponse } from '../utils/error-handler';
+import { formatErrorResponse } from '@/lib/tools/utils';
+import type {
+  McpServer,
+  ToolCallback,
+} from '@modelcontextprotocol/sdk/server/mcp.js';
 
-interface GetFileImportsProps {
-  filePath: string;
-  projectName: string;
-}
+const schema = {
+  projectName: z.string().describe('The name of the project.'),
+  filePath: z.string().describe('The path of the file to get imports from.'),
+};
+
+type Schema = typeof schema;
 
 /**
  * Tool function to get imports from a specific file in a project
@@ -14,7 +19,7 @@ interface GetFileImportsProps {
  * @param projectName Name of the project
  * @returns Content object with an array of import sources
  */
-const getFileImportsTool: ToolFunction<GetFileImportsProps> = async ({
+const getFileImportsTool: ToolCallback<Schema> = async ({
   filePath,
   projectName,
 }) => {
@@ -60,15 +65,10 @@ const getFileImportsTool: ToolFunction<GetFileImportsProps> = async ({
  * @param server MCP server instance
  */
 export function registerGetFileImportsTool(server: McpServer) {
-  server.tool(
+  server.tool<Schema>(
     'carver-get-file-imports',
     'Get imports from a specific file in a project.',
-    {
-      projectName: z.string().describe('The name of the project.'),
-      filePath: z
-        .string()
-        .describe('The path of the file to get imports from.'),
-    },
+    schema,
     getFileImportsTool
   );
 }

@@ -1,13 +1,27 @@
 import z from 'zod';
-import type { McpServer, ToolFunction } from '..';
 import { getApi } from '@/lib/services';
-import { formatErrorResponse } from '../utils/error-handler';
+import { formatErrorResponse } from '@/lib/tools/utils';
+import type {
+  McpServer,
+  ToolCallback,
+} from '@modelcontextprotocol/sdk/server/mcp.js';
 
-interface SearchFilesProps {
-  projectName: string;
-  searchTerm: string;
-  searchType?: 'function' | 'import' | 'directory' | undefined;
-}
+const schema = {
+  projectName: z.string().describe('The name of the project.'),
+  searchTerm: z
+    .string()
+    .describe(
+      'Term to search for in file paths, functions, imports, or directories.'
+    ),
+  searchType: z
+    .enum(['function', 'import', 'directory'])
+    .optional()
+    .describe(
+      'Optional type of search: "function" for function definitions, "import" for import statements, "directory" for file paths within specific directories. If not specified, performs a general file path search.'
+    ),
+};
+
+type Schema = typeof schema;
 
 /**
  * Tool function to search for files in a project
@@ -16,7 +30,7 @@ interface SearchFilesProps {
  * @param searchType Optional type of search: 'function', 'import', 'directory', or undefined for general search
  * @returns Content object with the search results
  */
-const searchFilesTool: ToolFunction<SearchFilesProps> = async ({
+const searchFilesTool: ToolCallback<Schema> = async ({
   projectName,
   searchTerm,
   searchType,
@@ -69,23 +83,10 @@ const searchFilesTool: ToolFunction<SearchFilesProps> = async ({
  * @param server MCP server instance
  */
 export function registerSearchFilesTool(server: McpServer) {
-  server.tool(
+  server.tool<Schema>(
     'carver-search-files',
     'Search for files in a project based on search term and optional search type.',
-    {
-      projectName: z.string().describe('The name of the project.'),
-      searchTerm: z
-        .string()
-        .describe(
-          'Term to search for in file paths, functions, imports, or directories.'
-        ),
-      searchType: z
-        .enum(['function', 'import', 'directory'])
-        .optional()
-        .describe(
-          'Optional type of search: "function" for function definitions, "import" for import statements, "directory" for file paths within specific directories. If not specified, performs a general file path search.'
-        ),
-    },
+    schema,
     searchFilesTool
   );
 }

@@ -1,16 +1,38 @@
 import z from 'zod';
-import type { McpServer, ToolFunction } from '..';
 import { getApi } from '@/lib/services';
-import { formatErrorResponse } from '../utils/error-handler';
+import { formatErrorResponse } from '@/lib/tools/utils';
+import type {
+  McpServer,
+  ToolCallback,
+} from '@modelcontextprotocol/sdk/server/mcp.js';
 
-interface UpdateFileProps {
-  projectName: string;
-  filePath: string;
-  startLine: number;
-  endLine?: number;
-  newContent?: string;
-  operation?: 'replace' | 'insert' | 'delete';
-}
+const schema = {
+  projectName: z.string().describe('The name of the project.'),
+  filePath: z.string().describe('The path of the file to update.'),
+  startLine: z
+    .number()
+    .int()
+    .positive()
+    .describe('The first line to replace (inclusive)'),
+  endLine: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe('The last line to replace (inclusive)'),
+  newContent: z
+    .string()
+    .optional()
+    .describe(
+      'The entire new content that will replace lines startLine through endLine'
+    ),
+  operation: z
+    .enum(['replace', 'insert', 'delete'])
+    .optional()
+    .describe('Type of operation: replace (default), insert, or delete.'),
+};
+
+type Schema = typeof schema;
 
 /**
  * Tool function to update a file in a project using PATCH operations
@@ -22,7 +44,7 @@ interface UpdateFileProps {
  * @param operation Type of operation: 'replace' (default), 'insert', or 'delete'
  * @returns Content object with the result of the operation
  */
-const updateFileTool: ToolFunction<UpdateFileProps> = async ({
+const updateFileTool: ToolCallback<Schema> = async ({
   projectName,
   filePath,
   startLine,
@@ -92,34 +114,10 @@ const updateFileTool: ToolFunction<UpdateFileProps> = async ({
  * @param server MCP server instance
  */
 export function registerUpdateFileTool(server: McpServer) {
-  server.tool(
+  server.tool<Schema>(
     'carver-update-file',
     'Update a file in a project using line-based PATCH operations.',
-    {
-      projectName: z.string().describe('The name of the project.'),
-      filePath: z.string().describe('The path of the file to update.'),
-      startLine: z
-        .number()
-        .int()
-        .positive()
-        .describe('The first line to replace (inclusive)'),
-      endLine: z
-        .number()
-        .int()
-        .positive()
-        .optional()
-        .describe('The last line to replace (inclusive)'),
-      newContent: z
-        .string()
-        .optional()
-        .describe(
-          'The entire new content that will replace lines startLine through endLine'
-        ),
-      operation: z
-        .enum(['replace', 'insert', 'delete'])
-        .optional()
-        .describe('Type of operation: replace (default), insert, or delete.'),
-    },
+    schema,
     updateFileTool
   );
 }

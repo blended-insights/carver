@@ -2,7 +2,7 @@
  * Git-related tools for Carver MCP
  */
 
-import type { McpServer } from '..';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 import { registerGitAddTool } from './git-add';
 import { registerGitCheckoutTool } from './git-checkout';

@@ -2,7 +2,7 @@
  * Folder-related tools for Carver MCP
  */
 
-import type { McpServer } from '..';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 import { registerCreateFolderTool } from './create-folder';
 import { registerGetFolderItemsTool } from './get-folder-items';

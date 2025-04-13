@@ -1,7 +1,8 @@
 {
   "name": "@carver/mcp",
   "version": "0.0.1",
-  "private": true,"bin": "./dist/main.js",
+  "private": true,
+  "bin": "./dist/main.js",
   "scripts": {
     "build": "tsc && npm run chmod",
     "chmod": "chmod 755 dist/main.js",
@@ -13,6 +14,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.8.0",
     "commander": "^11.1.0",
+    "mime-types": "3.0.1",
     "zod": "3.24.2"
   },
   "nx": {
@@ -79,5 +81,8 @@
         }
       }
     }
+  },
+  "devDependencies": {
+    "@types/mime-types": "2.1.4"
   }
 }

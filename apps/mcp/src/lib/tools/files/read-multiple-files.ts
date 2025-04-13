@@ -1,13 +1,25 @@
 import z from 'zod';
-import type { McpServer, ToolFunction } from '..';
 import { getApi } from '@/lib/services';
-import { formatErrorResponse } from '../utils/error-handler';
+import { formatErrorResponse } from '@/lib/tools/utils';
+import type {
+  McpServer,
+  ToolCallback,
+} from '@modelcontextprotocol/sdk/server/mcp.js';
 
-interface ReadMultipleFilesProps {
-  filePaths: string[];
-  projectName: string;
-  fields?: Array<'content' | 'hash' | 'lastModified'>;
-}
+const schema = {
+  projectName: z.string().describe('The name of the project.'),
+  filePaths: z
+    .array(z.string())
+    .describe('The paths of the files to read.'),
+  fields: z
+    .array(z.enum(['content', 'hash', 'lastModified']))
+    .optional()
+    .describe(
+      'Optional fields to include for each file. Defaults to all fields if not specified.'
+    ),
+};
+
+type Schema = typeof schema;
 
 /**
  * Tool function to read multiple files from a project
@@ -16,7 +28,7 @@ interface ReadMultipleFilesProps {
  * @param fields Optional fields to include (defaults to ['content', 'hash', 'lastModified'])
  * @returns Content object with the file data
  */
-const readMultipleFilesTool: ToolFunction<ReadMultipleFilesProps> = async ({
+const readMultipleFilesTool: ToolCallback<Schema> = async ({
   filePaths,
   projectName,
   fields = ['content', 'hash', 'lastModified'],
@@ -71,21 +83,10 @@ const readMultipleFilesTool: ToolFunction<ReadMultipleFilesProps> = async ({
  * @param server MCP server instance
  */
 export function registerReadMultipleFilesTool(server: McpServer) {
-  server.tool(
+  server.tool<Schema>(
     'carver-read-multiple-files',
     'Read multiple files from a project.',
-    {
-      projectName: z.string().describe('The name of the project.'),
-      filePaths: z
-        .array(z.string())
-        .describe('The paths of the files to read.'),
-      fields: z
-        .array(z.enum(['content', 'hash', 'lastModified']))
-        .optional()
-        .describe(
-          'Optional fields to include for each file. Defaults to all fields if not specified.'
-        ),
-    },
+    schema,
     readMultipleFilesTool
   );
 }

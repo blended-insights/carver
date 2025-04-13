@@ -1,18 +1,23 @@
 import z from 'zod';
-import type { McpServer, ToolFunction } from '..';
 import { getApi } from '@/lib/services';
-import { formatErrorResponse } from '../utils/error-handler';
+import { formatErrorResponse } from '@/lib/tools/utils';
+import type {
+  McpServer,
+  ToolCallback,
+} from '@modelcontextprotocol/sdk/server/mcp.js';
 
-interface GitResetProps {
-  projectName: string;
-}
+const schema = {
+  projectName: z.string().describe('The name of the project'),
+};
+
+type Schema = typeof schema;
 
 /**
  * Tool function to unstage all staged changes
  * @param projectName Name of the project
  * @returns Result of the reset operation
  */
-const gitResetTool: ToolFunction<GitResetProps> = async ({
+const gitResetTool: ToolCallback<Schema> = async ({
   projectName,
 }) => {
   try {
@@ -57,12 +62,10 @@ const gitResetTool: ToolFunction<GitResetProps> = async ({
  * @param server MCP server instance
  */
 export function registerGitResetTool(server: McpServer) {
-  server.tool(
+  server.tool<Schema>(
     'carver-git-reset',
     'Unstages all staged changes',
-    {
-      projectName: z.string().describe('The name of the project'),
-    },
+    schema,
     gitResetTool
   );
 }

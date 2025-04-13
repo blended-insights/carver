@@ -1,13 +1,23 @@
 import z from 'zod';
-import type { McpServer, ToolFunction } from '..';
 import { getApi } from '@/lib/services';
-import { formatErrorResponse } from '../utils/error-handler';
+import { formatErrorResponse } from '@/lib/tools/utils';
+import type {
+  McpServer,
+  ToolCallback,
+} from '@modelcontextprotocol/sdk/server/mcp.js';
 
-interface ReadFileProps {
-  filePath: string;
-  projectName: string;
-  fields?: Array<'content' | 'hash' | 'lastModified'>;
-}
+const schema = {
+  projectName: z.string().describe('The name of the project.'),
+  filePath: z.string().describe('The path of the file to read.'),
+  fields: z
+    .array(z.enum(['content', 'hash', 'lastModified']))
+    .optional()
+    .describe(
+      'Optional fields to include. Defaults to all fields if not specified.'
+    ),
+};
+
+type Schema = typeof schema;
 
 /**
  * Tool function to read a single file from a project
@@ -16,7 +26,7 @@ interface ReadFileProps {
  * @param fields Optional fields to include (defaults to ['content', 'hash', 'lastModified'])
  * @returns Content object with the file data
  */
-const readFileTool: ToolFunction<ReadFileProps> = async ({
+const readFileTool: ToolCallback<Schema> = async ({
   filePath,
   projectName,
   fields = ['content', 'hash', 'lastModified'],
@@ -53,22 +63,13 @@ const readFileTool: ToolFunction<ReadFileProps> = async ({
 
 /**
  * Register the read-file tool with the MCP server
- * @param server MCP server instance
+ * @param server MCP server insstance
  */
 export function registerReadFileTool(server: McpServer) {
-  server.tool(
+  server.tool<Schema>(
     'carver-read-file',
     'Read a single file from a project.',
-    {
-      projectName: z.string().describe('The name of the project.'),
-      filePath: z.string().describe('The path of the file to read.'),
-      fields: z
-        .array(z.enum(['content', 'hash', 'lastModified']))
-        .optional()
-        .describe(
-          'Optional fields to include. Defaults to all fields if not specified.'
-        ),
-    },
+    schema,
     readFileTool
   );
 }

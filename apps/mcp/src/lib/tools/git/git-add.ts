@@ -1,12 +1,17 @@
 import z from 'zod';
-import type { McpServer, ToolFunction } from '..';
 import { getApi } from '@/lib/services';
-import { formatErrorResponse } from '../utils/error-handler';
+import { formatErrorResponse } from '@/lib/tools/utils';
+import type {
+  McpServer,
+  ToolCallback,
+} from '@modelcontextprotocol/sdk/server/mcp.js';
 
-interface GitAddProps {
-  projectName: string;
-  files: string[];
-}
+const schema = {
+  projectName: z.string().describe('The name of the project'),
+  files: z.array(z.string()).describe('Array of file paths or patterns to add'),
+};
+
+type Schema = typeof schema;
 
 /**
  * Tool function to add file contents to the staging area
@@ -14,7 +19,7 @@ interface GitAddProps {
  * @param files Array of file paths or patterns to add
  * @returns Result of the add operation
  */
-const gitAddTool: ToolFunction<GitAddProps> = async ({
+const gitAddTool: ToolCallback<Schema> = async ({
   projectName,
   files,
 }) => {
@@ -61,13 +66,10 @@ const gitAddTool: ToolFunction<GitAddProps> = async ({
  * @param server MCP server instance
  */
 export function registerGitAddTool(server: McpServer) {
-  server.tool(
+  server.tool<Schema>(
     'carver-git-add',
     'Adds file contents to the staging area',
-    {
-      projectName: z.string().describe('The name of the project'),
-      files: z.array(z.string()).describe('Array of file paths or patterns to add'),
-    },
+    schema,
     gitAddTool
   );
 }

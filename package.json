@@ -6,6 +6,7 @@
     "api:build": "npx nx run api:build:production",
     "api:dev": "npx nx run api:serve:development",
     "api:serve": "npx nx run api:serve:production",
+    "claude:edit-mcp": "code '/Users/jamiethompson/Library/Application Support/Claude/claude_desktop_config.json'",
     "dev": "npx nx run-many --target=dev --projects=watcher,web",
     "docker-compose:dev": "docker-compose up neo4j redis",
     "docker-compose:up": "docker-compose -f 'docker-compose.yml' up -d --build ",
@@ -13,7 +14,7 @@
     "mcp:dev": "npx nx run mcp:serve:development",
     "mcp:dev:verbose": "npx nx run mcp:serve:development",
     "mcp:start": "npm run mcp:build && npx @modelcontextprotocol/inspector node apps/mcp/dist/main.js",
-    "mcp:start:prod": "NODE_ENV=production node apps/mcp/dist/main.js --host 0.0.0.0 --port 9230",
+    "mcp:start:prod": "NODE_ENV=production npx @modelcontextprotocol/inspector node --inspect=9231 --inspect-brk=9231 apps/mcp/dist/main.js",
     "web:build": "NODE_ENV=production npx nx run web:build --prod",
     "web:dev": "npx nx run web:dev",
     "web:start": "npx nx run web:start --prod"

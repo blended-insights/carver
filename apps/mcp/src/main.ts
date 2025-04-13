@@ -12,6 +12,8 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 // Load config first to get server options
 import { getConfig } from './lib/config';
 const config = getConfig();
+ 
+import { registerPrompts } from './lib/prompts';
 
 // Import tool registrations from tools module
 import {
@@ -21,11 +23,12 @@ import {
 } from './lib/tools';
 
 // Import resource registrations from resources module
-import { registerCarverProjectFilesResource } from './lib/resources';
+import { registerResources } from './lib/resources';
 
 // Import logger and services modules
-import { logger } from './lib/logger';
+import { initLogger, logger } from './lib/logger';
 import { initializeServices } from './lib/services';
+
 
 const server = new McpServer({
   name: 'carver', // Server name
@@ -38,7 +41,10 @@ const server = new McpServer({
 });
 
 // Register the project files resource
-registerCarverProjectFilesResource(server);
+registerResources(server);
+
+// Register the bug report prompt
+registerPrompts(server); // Register the bug report prompt
 
 // Register file operation tools
 registerFileTools(server); // Register all file tools
@@ -67,6 +73,9 @@ async function main() {
 
   // Initialize services
   initializeServices();
+
+  // Initialize logger with server instance
+  initLogger(server); 
 
   // Log startup information with appropriate verbosity
   logger.info('Carver MCP Server running on stdio 💥');

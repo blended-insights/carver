@@ -1,12 +1,17 @@
 import z from 'zod';
-import type { McpServer, ToolFunction } from '..';
 import { getApi } from '@/lib/services';
-import { formatErrorResponse } from '../utils/error-handler';
+import { formatErrorResponse } from '@/lib/tools/utils';
+import type {
+  McpServer,
+  ToolCallback,
+} from '@modelcontextprotocol/sdk/server/mcp.js';
 
-interface GitDiffProps {
-  projectName: string;
-  target: string;
-}
+const schema = {
+  projectName: z.string().describe('The name of the project'),
+  target: z.string().describe('Branch name, commit hash, or revision specifier'),
+};
+
+type Schema = typeof schema;
 
 /**
  * Tool function to show differences between branches or commits
@@ -14,7 +19,7 @@ interface GitDiffProps {
  * @param target Branch name, commit hash, or revision specifier
  * @returns Diff output showing changes between revisions
  */
-const gitDiffTool: ToolFunction<GitDiffProps> = async ({
+const gitDiffTool: ToolCallback<Schema> = async ({
   projectName,
   target,
 }) => {
@@ -55,13 +60,10 @@ const gitDiffTool: ToolFunction<GitDiffProps> = async ({
  * @param server MCP server instance
  */
 export function registerGitDiffTool(server: McpServer) {
-  server.tool(
+  server.tool<Schema>(
     'carver-git-diff',
     'Shows differences between branches or commits',
-    {
-      projectName: z.string().describe('The name of the project'),
-      target: z.string().describe('Branch name, commit hash, or revision specifier'),
-    },
+    schema,
     gitDiffTool
   );
 }

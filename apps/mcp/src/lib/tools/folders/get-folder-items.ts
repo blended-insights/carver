@@ -1,12 +1,17 @@
 import z from 'zod';
-import type { McpServer, ToolFunction } from '..';
 import { getApi } from '@/lib/services';
-import { formatErrorResponse } from '../utils/error-handler';
+import { formatErrorResponse } from '@/lib/tools/utils';
+import type {
+  McpServer,
+  ToolCallback,
+} from '@modelcontextprotocol/sdk/server/mcp.js';
 
-interface GetFolderItemsProps {
-  projectName: string;
-  folderPath: string;
-}
+const schema = {
+  projectName: z.string().describe('The name of the project.'),
+  folderPath: z.string().describe('The path of the folder to retrieve items from.'),
+};
+
+type Schema = typeof schema;
 
 /**
  * Tool function to get items (files and folders) in a specific project folder
@@ -14,7 +19,7 @@ interface GetFolderItemsProps {
  * @param folderPath Path of the folder to retrieve items from
  * @returns List of items in the folder
  */
-const getFolderItemsTool: ToolFunction<GetFolderItemsProps> = async ({
+const getFolderItemsTool: ToolCallback<Schema> = async ({
   projectName,
   folderPath,
 }) => {
@@ -63,15 +68,10 @@ const getFolderItemsTool: ToolFunction<GetFolderItemsProps> = async ({
  * @param server MCP server instance
  */
 export function registerGetFolderItemsTool(server: McpServer) {
-  server.tool(
+  server.tool<Schema>(
     'carver-get-folder-items',
     'Get items (files and folders) in a specific project folder.',
-    {
-      projectName: z.string().describe('The name of the project.'),
-      folderPath: z
-        .string()
-        .describe('The path of the folder to retrieve items from.'),
-    },
+    schema,
     getFolderItemsTool
   );
 }
