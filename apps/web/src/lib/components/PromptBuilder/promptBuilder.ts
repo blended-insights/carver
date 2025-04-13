@@ -72,8 +72,8 @@ const toolUseInstructions: {
     toolName: 'carver-update-file',
     toolParams: {
       operation: 'insert',
-      startLine: 'line to start update',
-      content: 'new content to insert',
+      startLine: 'line to insert the content on (inclusive)',
+      newContent: 'new content to insert',
     },
     toolUse:
       'Tool to insert next content into existing file by line number.',
@@ -82,8 +82,8 @@ const toolUseInstructions: {
     toolName: 'carver-update-file',
     toolParams: {
       operation: 'delete',
-      startLine: 'line to start deleting',
-      endLine: 'line to end deleting',
+      startLine: 'line to start deleting (inclusive)',
+      endLine: 'line to end deleting (inclusive)',
     },
     toolUse:
       'Tool to delete line(s) from a file.',
@@ -92,9 +92,9 @@ const toolUseInstructions: {
     toolName: 'carver-update-file',
     toolParams: {
       operation: 'replace',
-      startLine: 'line to start update',
-      endLine: 'line to end update',
-      content: 'content to replace',
+      startLine: 'line to start update (inclusive)',
+      endLine: 'line to end update (inclusive)',
+      newContent: 'new content to replace',
     },
     toolUse:
       'Tool to replace line(s) in a file.',

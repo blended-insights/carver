@@ -195,3 +195,23 @@ The API follows a consistent pattern:
 4. Return a standardized response
 
 All operations are properly logged and include error handling.
+
+## MCP Tools for Git Operations
+
+In addition to the REST API, Carver provides Model Context Protocol (MCP) tools for git operations:
+
+| Tool Name | Description | Parameters |
+|-----------|-------------|------------|
+| `git_status` | Shows the working tree status | `projectName` |
+| `git_diff_unstaged` | Shows changes in the working directory that are not yet staged | `projectName` |
+| `git_diff_staged` | Shows changes that are staged for commit | `projectName` |
+| `git_diff` | Shows differences between branches or commits | `projectName`, `target` |
+| `git_commit` | Records changes to the repository | `projectName`, `message` |
+| `git_add` | Adds file contents to the staging area | `projectName`, `files` |
+| `git_reset` | Unstages all staged changes | `projectName` |
+| `git_log` | Shows the commit logs | `projectName`, `maxCount` (optional) |
+| `git_create_branch` | Creates a new branch from an optional base branch | `projectName`, `branchName`, `baseBranch` (optional) |
+| `git_checkout` | Switches branches | `projectName`, `branchName` |
+| `git_show` | Shows the contents of a commit | `projectName`, `revision` |
+
+These tools integrate with the REST API and provide the same functionality through the MCP interface. Each tool requires a `projectName` parameter that identifies the project containing the git repository. The API server will automatically locate the repository based on the project name, so there's no need to specify the repository path.

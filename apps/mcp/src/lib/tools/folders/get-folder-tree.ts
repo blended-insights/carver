@@ -1,5 +1,5 @@
 import z from 'zod';
-import type { McpServer, ToolFunction } from '.';
+import type { McpServer, ToolFunction } from '..';
 import { getApiClient } from '@/lib/services';
 
 interface GetFolderTreeProps {
