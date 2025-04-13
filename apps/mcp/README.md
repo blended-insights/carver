@@ -60,11 +60,16 @@ The Carver MCP server provides the following tools:
 | `carver-read-multiple-files` | Read multiple files from a project                                          |
 | `carver-write-file`          | Write content to a file in a project                                        |
 | `carver-update-file`         | Update a file in a project using line-based PATCH operations                |
+| `carver-get-file-imports`    | Get imports from a specific file in a project                               |
+| `carver-search-files`        | Search for files in a project based on search term and optional search type |
+
+### Folder Operations
+
+| Tool Name                    | Description                                                                 |
+| ---------------------------- | --------------------------------------------------------------------------- |
 | `carver-create-folder`       | Create a new folder in a project                                            |
 | `carver-get-folder-items`    | Get items (files and folders) in a specific project folder                  |
 | `carver-get-folder-tree`     | Get a recursive tree view of a project folder's contents                    |
-| `carver-get-file-imports`    | Get imports from a specific file in a project                               |
-| `carver-search-files`        | Search for files in a project based on search term and optional search type |
 
 ### Git Operations
 
