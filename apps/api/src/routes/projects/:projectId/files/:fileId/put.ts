@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import logger from '@/utils/logger';
-import { ensureFileInRedis, updateFileAndQueueWrite } from './shared-utils';
+import { ensureFileInRedis, isValidScript, updateFileAndQueueWrite } from './shared-utils';
 
 const router = Router({ mergeParams: true });
 
@@ -14,6 +14,9 @@ router.put('/', async (req: Request, res: Response) => {
     const { projectId, fileId } = req.params;
     const { oldText, newText } = req.body;
 
+    // Decode fileId to handle URL encoding
+    const decodedFileId = decodeURIComponent(fileId);
+
     // Validate request body
     if (!oldText || !newText) {
       return res.status(400).json({
@@ -23,7 +26,7 @@ router.put('/', async (req: Request, res: Response) => {
     }
 
     // Ensure file is available in Redis
-    const fileResult = await ensureFileInRedis(projectId, fileId);
+    const fileResult = await ensureFileInRedis(projectId, decodedFileId);
     if (!fileResult.success || !fileResult.content) {
       return res.status(404).json({
         success: false,
@@ -39,14 +42,14 @@ router.put('/', async (req: Request, res: Response) => {
 
     // Check if the text to replace exists in the content using regex
     if (!oldTextRegex.test(content)) {
-      logger.warn(`Text to replace not found in file ${fileId}`);
+      logger.warn(`Text to replace not found in file ${decodedFileId}`);
 
       // Find closest match for debugging purposes
       const closestMatch = findClosestMatch(content, oldText);
 
       return res.status(400).json({
         success: false,
-        message: `Text to replace not found in file ${fileId}`,
+        message: `Text to replace not found in file ${decodedFileId}`,
         debug: {
           searchedFor: oldText,
           content,
@@ -63,11 +66,20 @@ router.put('/', async (req: Request, res: Response) => {
     // Perform the replacement
     const updatedContent = content.replace(oldTextRegex, newText);
 
+    const isScriptValid = isValidScript(updatedContent, decodedFileId);
+    if (!isScriptValid.valid) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid script',
+        errors: isScriptValid.errors,
+      });
+    }
+
     // Update file in Redis and queue disk write
     return updateFileAndQueueWrite(
       res,
       projectId,
-      fileId,
+      decodedFileId,
       updatedContent,
       'text replacement'
     );

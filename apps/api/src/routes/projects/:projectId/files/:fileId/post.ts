@@ -1,6 +1,12 @@
 import { Router, Request, Response } from 'express';
+
 import logger from '@/utils/logger';
-import { neo4jService, redisService, queueService, fileSystemService } from '@/services';
+import { redisService, queueService, fileSystemService } from '@/services';
+import buildProjectPath from '@/utils/path-builder';
+
+import { isValidScript } from './shared-utils';
+
+const { USER_MOUNT } = process.env;
 
 const router = Router({ mergeParams: true });
 
@@ -14,6 +20,9 @@ router.post('/', async (req: Request, res: Response) => {
     const { projectId, fileId } = req.params;
     const { content } = req.body;
 
+    // Decode fileId to handle URL encoding
+    const decodedFileId = decodeURIComponent(fileId);
+
     // Validate request body
     if (!content) {
       return res.status(400).json({
@@ -23,32 +32,40 @@ router.post('/', async (req: Request, res: Response) => {
     }
 
     logger.info(
-      `Processing file ${fileId} for creation/update in project: ${projectId}`
+      `Processing file ${decodedFileId} for creation/update in project: ${projectId}`
     );
 
-    // Get project path from Neo4j
-    const project = await neo4jService.getProjectByName(projectId);
-
-    if (!project || !project.path) {
+    if (!USER_MOUNT) {
       return res.status(404).json({
         success: false,
         message: `Project ${projectId} not found`,
       });
     }
 
-    const diskPath = project.path;
+    const isScriptValid = isValidScript(content, decodedFileId);
+    if (!isScriptValid.valid) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid script',
+        errors: isScriptValid.errors,
+      });
+    }
+
+    const diskPath = buildProjectPath(projectId);
 
     // Calculate hash for the file content
     const hash = fileSystemService.calculateHash(content);
 
-    // First store the file data in Redis 
-    logger.debug(`Storing file data in Redis for ${fileId} in project ${projectId}`);
-    await redisService.storeFileData(projectId, fileId, content, hash);
+    // First store the file data in Redis
+    logger.debug(
+      `Storing file data in Redis for ${decodedFileId} in project ${projectId}`
+    );
+    await redisService.storeFileData(projectId, decodedFileId, content, hash);
 
     // Add file processing job to queue
     const job = await queueService.addFileJob(
       projectId,
-      fileId,
+      decodedFileId,
       content,
       diskPath
     );
@@ -56,10 +73,10 @@ router.post('/', async (req: Request, res: Response) => {
     // Return acceptance with job ID for status tracking
     return res.status(202).json({
       success: true,
-      message: `File ${fileId} queued for processing`,
+      message: `File ${decodedFileId} queued for processing`,
       data: {
         jobId: job.id,
-        path: fileId,
+        path: decodedFileId,
       },
     });
   } catch (error) {

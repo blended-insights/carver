@@ -2,8 +2,48 @@ import { fileSystemService, queueService, redisService } from '@/services';
 import logger from '@/utils/logger';
 import buildProjectPath from '@/utils/path-builder';
 import { Response } from 'express';
+import ts from 'typescript';
 
 const { USER_MOUNT } = process.env;
+
+export function isValidScript(
+  code: string,
+  fileName: string
+): { valid: boolean; errors?: string[] } {
+  const ext = fileName.split('.').pop()?.toLowerCase();
+
+  // Check if the file extension is not one of the supported types
+  // If not, return valid without further checks
+  if (!ext || !['js', 'jsx', 'ts', 'tsx'].includes(ext)) {
+    return { valid: true };
+  }
+
+  const { diagnostics } = ts.transpileModule(code, {
+    compilerOptions: {
+      allowJs: true,
+      jsx: ts.JsxEmit.React,
+      target: ts.ScriptTarget.ESNext,
+    },
+    fileName,
+    reportDiagnostics: true,
+    transformers: undefined,
+  });
+
+  if (!diagnostics || diagnostics.length === 0) {
+    return { valid: true };
+  }
+
+  const errors = diagnostics.map((d) => {
+    const { line, character } = d.file
+      ? d.file.getLineAndCharacterOfPosition(d.start ?? 0)
+      : { line: 0, character: 0 };
+
+    const message = ts.flattenDiagnosticMessageText(d.messageText, '\n');
+    return `Line ${line + 1}, Col ${character + 1}: ${message}`;
+  });
+
+  return { valid: false, errors };
+}
 
 /**
  * Ensures a file is available in Redis, loading from disk if needed

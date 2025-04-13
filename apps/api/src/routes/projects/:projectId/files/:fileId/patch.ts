@@ -1,6 +1,10 @@
 import { Router, Request, Response } from 'express';
 import logger from '@/utils/logger';
-import { ensureFileInRedis, updateFileAndQueueWrite } from './shared-utils';
+import {
+  ensureFileInRedis,
+  isValidScript,
+  updateFileAndQueueWrite,
+} from './shared-utils';
 
 const router = Router({ mergeParams: true });
 
@@ -176,6 +180,15 @@ router.patch(
             ...lines.slice(req.body.endLine),
           ].join('\n');
           break;
+      }
+
+      const isScriptValid = isValidScript(updatedContent, decodedFileId);
+      if (!isScriptValid.valid) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid script',
+          errors: isScriptValid.errors,
+        });
       }
 
       // Update file in Redis and queue disk write
