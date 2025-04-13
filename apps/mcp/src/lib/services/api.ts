@@ -27,6 +27,50 @@ interface FolderTreeItem {
 }
 
 /**
+ * Git status response
+ */
+interface GitStatus {
+  current: string;
+  tracking?: string;
+  files: Array<{
+    path: string;
+    working_dir?: string;
+    index?: string;
+  }>;
+  not_added: string[];
+  conflicted: string[];
+  created: string[];
+  deleted: string[];
+  modified: string[];
+  renamed: string[];
+  staged: string[];
+  ahead: number;
+  behind: number;
+  // Other properties from simple-git
+}
+
+/**
+ * Git commit response
+ */
+interface GitCommit {
+  commit: string;
+  message: string;
+  author_name: string;
+  author_email: string;
+  date: string;
+  // Other properties from simple-git
+}
+
+/**
+ * Git log response
+ */
+interface GitLog {
+  latest: GitCommit;
+  all: GitCommit[];
+  total: number;
+}
+
+/**
  * Project data structure
  */
 interface Project {
@@ -170,6 +214,69 @@ export interface PatchProjectFileParams extends BaseParams {
   endLine?: number;
   newContent?: string;
   operation?: 'replace' | 'insert' | 'delete';
+}
+
+/**
+ * Parameters for getGitStatus
+ */
+type GetGitStatusParams = BaseParams
+
+/**
+ * Parameters for gitAddFiles
+ */
+interface GitAddFilesParams extends BaseParams {
+  files: string[];
+}
+
+/**
+ * Parameters for gitCommit
+ */
+interface GitCommitParams extends BaseParams {
+  message: string;
+}
+
+/**
+ * Parameters for gitDiff
+ */
+type GitDiffParams = BaseParams
+
+/**
+ * Parameters for gitDiffStaged
+ */
+type GitDiffStagedParams = BaseParams
+
+/**
+ * Parameters for gitLog
+ */
+interface GitLogParams extends BaseParams {
+  maxCount?: number;
+}
+
+/**
+ * Parameters for gitCreateBranch
+ */
+interface GitCreateBranchParams extends BaseParams {
+  branchName: string;
+  baseBranch?: string;
+}
+
+/**
+ * Parameters for gitCheckout
+ */
+interface GitCheckoutParams extends BaseParams {
+  branchName: string;
+}
+
+/**
+ * Parameters for gitReset
+ */
+type GitResetParams = BaseParams
+
+/**
+ * Parameters for gitShow
+ */
+interface GitShowParams extends BaseParams {
+  revision: string;
 }
 
 /**
@@ -670,4 +777,280 @@ export class CarverApiClient {
       throw error;
     }
   }
+
+  // Git-related methods
+
+  /**
+   * Get the git status of a project
+   * @param params Parameters for getGitStatus
+   * @returns Git status information
+   */
+  async getGitStatus({ projectName }: GetGitStatusParams): Promise<GitStatus> {
+    try {
+      const response = await this.client.get<ApiResponse<GitStatus>>(
+        `/projects/${projectName}/git/status`
+      );
+
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+
+      throw new Error(response.data.message || 'Failed to get git status');
+    } catch (error) {
+      console.error(`Error getting git status for ${projectName}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Add files to git staging
+   * @param params Parameters for gitAddFiles
+   * @returns Result of the add operation
+   */
+  async gitAddFiles({ projectName, files }: GitAddFilesParams): Promise<unknown> {
+    try {
+      const response = await this.client.post<ApiResponse<unknown>>(
+        `/projects/${projectName}/git/add`,
+        { files }
+      );
+
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+
+      throw new Error(response.data.message || 'Failed to add files to git');
+    } catch (error) {
+      console.error(`Error adding files to git for ${projectName}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a git commit
+   * @param params Parameters for gitCommit
+   * @returns Result of the commit operation
+   */
+  async gitCommit({ projectName, message }: GitCommitParams): Promise<unknown> {
+    try {
+      const response = await this.client.post<ApiResponse<unknown>>(
+        `/projects/${projectName}/git/commits`,
+        { message }
+      );
+
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+
+      throw new Error(response.data.message || 'Failed to commit changes');
+    } catch (error) {
+      console.error(`Error committing changes for ${projectName}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get git diff (unstaged changes)
+   * @param params Parameters for gitDiff
+   * @returns Diff output
+   */
+  async gitDiff({ projectName }: GitDiffParams): Promise<string> {
+    try {
+      const response = await this.client.get<ApiResponse<string>>(
+        `/projects/${projectName}/git/diff`
+      );
+
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+
+      throw new Error(response.data.message || 'Failed to get git diff');
+    } catch (error) {
+      console.error(`Error getting git diff for ${projectName}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get git diff for staged changes
+   * @param params Parameters for gitDiffStaged
+   * @returns Diff output
+   */
+  async gitDiffStaged({ projectName }: GitDiffStagedParams): Promise<string> {
+    try {
+      const response = await this.client.get<ApiResponse<string>>(
+        `/projects/${projectName}/git/diff/staged`
+      );
+
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+
+      throw new Error(response.data.message || 'Failed to get git staged diff');
+    } catch (error) {
+      console.error(`Error getting git staged diff for ${projectName}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get git commit logs
+   * @param params Parameters for gitLog
+   * @returns Commit log information
+   */
+  async gitLog({ projectName, maxCount = 10 }: GitLogParams): Promise<GitLog> {
+    try {
+      const response = await this.client.get<ApiResponse<GitLog>>(
+        `/projects/${projectName}/git/logs`,
+        { params: { maxCount } }
+      );
+
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+
+      throw new Error(response.data.message || 'Failed to get git logs');
+    } catch (error) {
+      console.error(`Error getting git logs for ${projectName}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new git branch
+   * @param params Parameters for gitCreateBranch
+   * @returns Result of the branch creation
+   */
+  async gitCreateBranch({
+    projectName,
+    branchName,
+    baseBranch,
+  }: GitCreateBranchParams): Promise<unknown> {
+    try {
+      const payload: { name: string; baseBranch?: string } = {
+        name: branchName,
+      };
+
+      if (baseBranch) {
+        payload.baseBranch = baseBranch;
+      }
+
+      const response = await this.client.post<ApiResponse<unknown>>(
+        `/projects/${projectName}/git/branches`,
+        payload
+      );
+
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+
+      throw new Error(response.data.message || 'Failed to create git branch');
+    } catch (error) {
+      console.error(`Error creating git branch for ${projectName}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Checkout a git branch
+   * @param params Parameters for gitCheckout
+   * @returns Result of the checkout operation
+   */
+  async gitCheckout({
+    projectName,
+    branchName,
+  }: GitCheckoutParams): Promise<unknown> {
+    try {
+      const response = await this.client.post<ApiResponse<unknown>>(
+        `/projects/${projectName}/git/branches/${branchName}`,
+        {}
+      );
+
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+
+      throw new Error(response.data.message || 'Failed to checkout git branch');
+    } catch (error) {
+      console.error(`Error checking out git branch for ${projectName}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Reset all staged changes
+   * @param params Parameters for gitReset
+   * @returns Result of the reset operation
+   */
+  async gitReset({ projectName }: GitResetParams): Promise<unknown> {
+    try {
+      const response = await this.client.post<ApiResponse<unknown>>(
+        `/projects/${projectName}/git/reset`,
+        {}
+      );
+
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+
+      throw new Error(response.data.message || 'Failed to reset git index');
+    } catch (error) {
+      console.error(`Error resetting git index for ${projectName}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Show a specific commit
+   * @param params Parameters for gitShow
+   * @returns Commit information
+   */
+  async gitShow({ projectName, revision }: GitShowParams): Promise<string> {
+    try {
+      const response = await this.client.get<ApiResponse<string>>(
+        `/projects/${projectName}/git/commits/${revision}`
+      );
+
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+
+      throw new Error(response.data.message || 'Failed to show git commit');
+    } catch (error) {
+      console.error(`Error showing git commit for ${projectName}:`, error);
+      throw error;
+    }
+  }
+}
+
+// Export a singleton instance of the API client
+let apiClient: CarverApiClient | null = null;
+
+/**
+ * Get the API client singleton instance
+ * @param host Optional host override
+ * @param port Optional port override
+ * @returns CarverApiClient instance
+ */
+export function getApiClient(host?: string, port?: number): CarverApiClient {
+  if (!apiClient) {
+    apiClient = new CarverApiClient(host, port);
+  }
+  return apiClient;
+}
+
+/**
+ * Set the API client singleton instance (useful for testing)
+ * @param client CarverApiClient instance
+ */
+export function setApiClient(client: CarverApiClient): void {
+  apiClient = client;
+}
+
+/**
+ * Initialize API client with configuration
+ * @param host Optional host override
+ * @param port Optional port override
+ */
+export function initializeApiClient(host?: string, port?: number): void {
+  apiClient = new CarverApiClient(host, port);
 }

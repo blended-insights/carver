@@ -48,6 +48,40 @@ node dist/apps/mcp/main.js --debug --log-level debug
 node dist/apps/mcp/main.js --host 0.0.0.0 --port 8080
 ```
 
+## Available MCP Tools
+
+The Carver MCP server provides the following tools:
+
+### File Operations
+
+| Tool Name | Description |
+|-----------|-------------|
+| `carver-read-file` | Read a single file from a project |
+| `carver-read-multiple-files` | Read multiple files from a project |
+| `carver-write-file` | Write content to a file in a project |
+| `carver-update-file` | Update a file in a project using line-based PATCH operations |
+| `carver-create-folder` | Create a new folder in a project |
+| `carver-get-folder-items` | Get items (files and folders) in a specific project folder |
+| `carver-get-folder-tree` | Get a recursive tree view of a project folder's contents |
+| `carver-get-file-imports` | Get imports from a specific file in a project |
+| `carver-search-files` | Search for files in a project based on search term and optional search type |
+
+### Git Operations
+
+| Tool Name | Description |
+|-----------|-------------|
+| `git_status` | Shows the working tree status |
+| `git_diff_unstaged` | Shows changes in the working directory that are not yet staged |
+| `git_diff_staged` | Shows changes that are staged for commit |
+| `git_diff` | Shows differences between branches or commits |
+| `git_commit` | Records changes to the repository |
+| `git_add` | Adds file contents to the staging area |
+| `git_reset` | Unstages all staged changes |
+| `git_log` | Shows the commit logs |
+| `git_create_branch` | Creates a new branch from an optional base branch |
+| `git_checkout` | Switches branches |
+| `git_show` | Shows the contents of a commit |
+
 ## Configuration File
 
 You can provide a configuration file using the `--config` option. The file should be a JSON file with the following structure:
