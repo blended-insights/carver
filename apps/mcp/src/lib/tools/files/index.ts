@@ -12,14 +12,6 @@ import { registerSearchFilesTool } from './search-files';
 import { registerUpdateFileTool } from './update-file';
 import { registerWriteFileTool } from './write-file';
 
-export * from './edit-file';
-export * from './get-file-imports';
-export * from './read-file';
-export * from './read-multiple-files';
-export * from './search-files';
-export * from './update-file';
-export * from './write-file';
-
 /**
  * Register all File-related tools with the MCP server
  * @param server MCP server instance

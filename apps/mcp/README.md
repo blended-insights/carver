@@ -118,3 +118,39 @@ Configuration options are applied with the following priority (highest to lowest
 2. Environment variables
 3. Configuration file
 4. Default values
+
+## API Client Architecture
+
+The Carver MCP API client is organized in a modular structure for better maintainability and separation of concerns:
+
+```
+apps/mcp/src/lib/services/api/
+├── client.ts     # Core CarverApiClient with HTTP methods
+├── file.ts       # File-related API operations
+├── folder.ts     # Folder-related API operations
+├── git.ts        # Git-related API operations
+├── index.ts      # Main exports and integrated CarverApi client
+├── project.ts    # Project-related API operations
+└── types.ts      # Type definitions for all API interactions
+```
+
+### Usage Examples
+
+```typescript
+// Import the full API client
+import { getApi } from 'apps/mcp/src/lib/services/api';
+
+// Get the API singleton instance
+const api = getApi();
+
+// Use the API with namespaced methods
+const files = await api.files.getProjectFiles({ projectName: 'myProject' });
+const status = await api.git.getGitStatus({ projectName: 'myProject' });
+
+// Import specific clients directly if needed
+import { FileApiClient } from 'apps/mcp/src/lib/services/api';
+import { CarverApiClient } from 'apps/mcp/src/lib/services/api';
+
+const apiClient = new CarverApiClient();
+const fileClient = new FileApiClient(apiClient);
+```

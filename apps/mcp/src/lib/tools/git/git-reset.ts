@@ -1,6 +1,7 @@
 import z from 'zod';
 import type { McpServer, ToolFunction } from '..';
-import { getApiClient } from '@/lib/services';
+import { getApi } from '@/lib/services';
+import { formatErrorResponse } from '../utils/error-handler';
 
 interface GitResetProps {
   projectName: string;
@@ -15,33 +16,35 @@ const gitResetTool: ToolFunction<GitResetProps> = async ({
   projectName,
 }) => {
   try {
-    const apiClient = getApiClient();
-    const result = await apiClient.gitReset({ projectName });
+    const api = getApi();
+    const result = await api.git.gitReset({ projectName });
 
     // Return the reset result as a formatted result
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(result, null, 2),
+          text: JSON.stringify(
+            {
+              success: true,
+              message: "Successfully unstaged all changes",
+              data: result
+            },
+            null,
+            2
+          ),
         },
       ],
     };
   } catch (error) {
-    // Return the error as a formatted result
+    // Use the shared error handler to format the error
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(
-            {
-              error: true,
-              message: `Failed to reset staged changes for ${projectName}: ${
-                error instanceof Error ? error.message : String(error)
-              }`,
-            },
-            null,
-            2
+          text: formatErrorResponse(
+            error, 
+            `Failed to reset staged changes for ${projectName}`
           ),
         },
       ],
@@ -55,7 +58,7 @@ const gitResetTool: ToolFunction<GitResetProps> = async ({
  */
 export function registerGitResetTool(server: McpServer) {
   server.tool(
-    'git_reset',
+    'carver-git-reset',
     'Unstages all staged changes',
     {
       projectName: z.string().describe('The name of the project'),

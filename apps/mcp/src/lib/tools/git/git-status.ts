@@ -1,6 +1,7 @@
 import z from 'zod';
 import type { McpServer, ToolFunction } from '..';
-import { getApiClient } from '@/lib/services';
+import { getApi } from '@/lib/services';
+import { formatErrorResponse } from '../utils/error-handler';
 
 interface GitStatusProps {
   projectName: string;
@@ -15,33 +16,37 @@ const gitStatusTool: ToolFunction<GitStatusProps> = async ({
   projectName,
 }) => {
   try {
-    const apiClient = getApiClient();
-    const status = await apiClient.getGitStatus({ projectName });
+    const api = getApi();
+    const status = await api.git.getGitStatus({ projectName });
 
     // Return the status data as a formatted result
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(status, null, 2),
+          text: JSON.stringify(
+            {
+              success: true,
+              message: `Current branch: ${status.current}${
+                status.tracking ? `, tracking: ${status.tracking}` : ''
+              }`,
+              data: status
+            },
+            null,
+            2
+          ),
         },
       ],
     };
   } catch (error) {
-    // Return the error as a formatted result
+    // Use the shared error handler to format the error
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(
-            {
-              error: true,
-              message: `Failed to get git status for ${projectName}: ${
-                error instanceof Error ? error.message : String(error)
-              }`,
-            },
-            null,
-            2
+          text: formatErrorResponse(
+            error, 
+            `Failed to get git status for ${projectName}`
           ),
         },
       ],
@@ -55,7 +60,7 @@ const gitStatusTool: ToolFunction<GitStatusProps> = async ({
  */
 export function registerGitStatusTool(server: McpServer) {
   server.tool(
-    'git_status',
+    'carver-git-status',
     'Shows the working tree status',
     {
       projectName: z.string().describe('The name of the project'),

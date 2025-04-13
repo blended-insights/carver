@@ -1,6 +1,6 @@
 import z from 'zod';
 import type { McpServer, ToolFunction } from '..';
-import { getApiClient } from '@/lib/services';
+import { getApi } from '@/lib/services';
 
 interface GetFolderTreeProps {
   projectName: string;
@@ -21,8 +21,8 @@ const getFolderTreeTool: ToolFunction<GetFolderTreeProps> = async ({
   depth,
 }) => {
   try {
-    const apiClient = getApiClient();
-    const folderTree = await apiClient.getFolderTree({
+    const api = getApi();
+    const folderTree = await api.folders.getFolderTree({
       projectName,
       folderPath,
       depth,

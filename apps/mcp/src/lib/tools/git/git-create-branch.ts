@@ -1,6 +1,7 @@
 import z from 'zod';
 import type { McpServer, ToolFunction } from '..';
-import { getApiClient } from '@/lib/services';
+import { getApi } from '@/lib/services';
+import { formatErrorResponse } from '../utils/error-handler';
 
 interface GitCreateBranchProps {
   projectName: string;
@@ -21,8 +22,8 @@ const gitCreateBranchTool: ToolFunction<GitCreateBranchProps> = async ({
   baseBranch,
 }) => {
   try {
-    const apiClient = getApiClient();
-    const result = await apiClient.gitCreateBranch({
+    const api = getApi();
+    const result = await api.git.gitCreateBranch({
       projectName,
       branchName,
       baseBranch: baseBranch || undefined,
@@ -33,25 +34,29 @@ const gitCreateBranchTool: ToolFunction<GitCreateBranchProps> = async ({
       content: [
         {
           type: 'text',
-          text: JSON.stringify(result, null, 2),
+          text: JSON.stringify(
+            {
+              success: true,
+              message: `Successfully created branch '${branchName}'${
+                baseBranch ? ` from base branch '${baseBranch}'` : ''
+              }`,
+              data: result
+            },
+            null,
+            2
+          ),
         },
       ],
     };
   } catch (error) {
-    // Return the error as a formatted result
+    // Use the shared error handler to format the error
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(
-            {
-              error: true,
-              message: `Failed to create branch ${branchName} for ${projectName}: ${
-                error instanceof Error ? error.message : String(error)
-              }`,
-            },
-            null,
-            2
+          text: formatErrorResponse(
+            error, 
+            `Failed to create branch ${branchName} for ${projectName}`
           ),
         },
       ],
@@ -65,7 +70,7 @@ const gitCreateBranchTool: ToolFunction<GitCreateBranchProps> = async ({
  */
 export function registerGitCreateBranchTool(server: McpServer) {
   server.tool(
-    'git_create_branch',
+    'carver-git-create-branch',
     'Creates a new branch from an optional base branch',
     {
       projectName: z.string().describe('The name of the project'),

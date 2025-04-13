@@ -1,6 +1,7 @@
 import z from 'zod';
 import type { McpServer, ToolFunction } from '..';
-import { getApiClient } from '@/lib/services';
+import { getApi } from '@/lib/services';
+import { formatErrorResponse } from '../utils/error-handler';
 
 interface GetFolderItemsProps {
   projectName: string;
@@ -18,8 +19,8 @@ const getFolderItemsTool: ToolFunction<GetFolderItemsProps> = async ({
   folderPath,
 }) => {
   try {
-    const apiClient = getApiClient();
-    const folderItems = await apiClient.getFolderItems({
+    const api = getApi();
+    const folderItems = await api.folders.getFolderItems({
       projectName,
       folderPath,
     });
@@ -29,25 +30,27 @@ const getFolderItemsTool: ToolFunction<GetFolderItemsProps> = async ({
       content: [
         {
           type: 'text',
-          text: JSON.stringify(folderItems, null, 2),
+          text: JSON.stringify(
+            {
+              success: true,
+              message: `Retrieved ${folderItems.length} items from folder ${folderPath}`,
+              data: folderItems
+            },
+            null, 
+            2
+          ),
         },
       ],
     };
   } catch (error) {
-    // Return the error as a formatted result
+    // Use the shared error handler to format the error
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(
-            {
-              error: true,
-              message: `Failed to retrieve folder items for ${folderPath}: ${
-                error instanceof Error ? error.message : String(error)
-              }`,
-            },
-            null,
-            2
+          text: formatErrorResponse(
+            error, 
+            `Failed to retrieve folder items for ${folderPath}`
           ),
         },
       ],

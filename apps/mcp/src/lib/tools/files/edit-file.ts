@@ -1,6 +1,7 @@
 import z from 'zod';
 import type { McpServer, ToolFunction } from '..';
-import { getApiClient } from '@/lib/services';
+import { getApi } from '@/lib/services';
+import { formatErrorResponse } from '../utils/error-handler';
 
 interface EditFileProps {
   filePath: string;
@@ -24,10 +25,10 @@ const editFileTool: ToolFunction<EditFileProps> = async ({
   newText,
 }) => {
   try {
-    const apiClient = getApiClient();
+    const api = getApi();
 
     // Write the updated content back to the file
-    const result = await apiClient.updateProjectFile({
+    const result = await api.files.updateProjectFile({
       projectName,
       filePath,
       oldText,
@@ -52,21 +53,12 @@ const editFileTool: ToolFunction<EditFileProps> = async ({
       ],
     };
   } catch (error) {
-    // Return the error as a formatted result
+    // Use the shared error handler to format the error
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(
-            {
-              error: true,
-              message: `Failed to edit file ${filePath}: ${
-                error instanceof Error ? error.message : String(error)
-              }`,
-            },
-            null,
-            2
-          ),
+          text: formatErrorResponse(error, `Failed to edit file ${filePath}`),
         },
       ],
     };

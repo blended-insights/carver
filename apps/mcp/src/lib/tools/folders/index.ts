@@ -8,10 +8,6 @@ import { registerCreateFolderTool } from './create-folder';
 import { registerGetFolderItemsTool } from './get-folder-items';
 import { registerGetFolderTreeTool } from './get-folder-tree';
 
-export * from './create-folder';
-export * from './get-folder-items';
-export * from './get-folder-tree';
-
 /**
  * Register all Folder-related tools with the MCP server
  * @param server MCP server instance

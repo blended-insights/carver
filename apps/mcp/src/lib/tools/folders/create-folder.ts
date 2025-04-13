@@ -1,6 +1,7 @@
 import z from 'zod';
 import type { McpServer, ToolFunction } from '..';
-import { getApiClient } from '@/lib/services';
+import { getApi } from '@/lib/services';
+import { formatErrorResponse } from '../utils/error-handler';
 
 interface CreateFolderProps {
   projectName: string;
@@ -18,10 +19,10 @@ const createFolderTool: ToolFunction<CreateFolderProps> = async ({
   folderPath,
 }) => {
   try {
-    const apiClient = getApiClient();
+    const api = getApi();
 
     // Call the API endpoint to create the folder
-    const response = await apiClient.createProjectFolder({
+    const response = await api.folders.createProjectFolder({
       projectName,
       folderPath,
     });
@@ -44,21 +45,12 @@ const createFolderTool: ToolFunction<CreateFolderProps> = async ({
       ],
     };
   } catch (error) {
-    // Return the error as a formatted result
+    // Use the shared error handler to format the error
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(
-            {
-              error: true,
-              message: `Failed to create folder ${folderPath}: ${
-                error instanceof Error ? error.message : String(error)
-              }`,
-            },
-            null,
-            2
-          ),
+          text: formatErrorResponse(error, `Failed to create folder ${folderPath}`),
         },
       ],
     };

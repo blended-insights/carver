@@ -5,18 +5,18 @@
 
 import { getConfig } from '../config';
 import { logger } from '../logger';
-import { CarverApiClient } from './api';
+import { CarverApi } from './api';
 
 // Service singletons
-let apiClient: CarverApiClient | null = null;
+let apiInstance: CarverApi | null = null;
 
 /**
- * Initialize the API client using configuration settings
- * @returns Configured API client instance
+ * Initialize and get the CarverApi client instance
+ * @returns Configured CarverApi instance
  */
-export function getApiClient(): CarverApiClient {
-  if (apiClient) {
-    return apiClient;
+export function getApi(): CarverApi {
+  if (apiInstance) {
+    return apiInstance;
   }
 
   const config = getConfig();
@@ -26,9 +26,18 @@ export function getApiClient(): CarverApiClient {
     port: config.port,
   });
 
-  apiClient = new CarverApiClient(config.host, config.port);
+  apiInstance = new CarverApi(config.host, config.port);
 
-  return apiClient;
+  return apiInstance;
+}
+
+/**
+ * Get the API client singleton instance 
+ * @returns CarverApi instance
+ * @deprecated Use getApi() instead which provides a more structured API access
+ */
+export function getApiClient(): CarverApi {
+  return getApi();
 }
 
 /**
@@ -36,7 +45,7 @@ export function getApiClient(): CarverApiClient {
  */
 export function initializeServices(): void {
   // Initialize API client
-  getApiClient();
+  getApi();
 
   // Initialize other services here as needed
 

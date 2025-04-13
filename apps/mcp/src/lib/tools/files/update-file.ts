@@ -1,7 +1,7 @@
 import z from 'zod';
 import type { McpServer, ToolFunction } from '..';
-import { getApiClient } from '@/lib/services';
-import { PatchProjectFileParams } from '@/lib/services/api';
+import { getApi } from '@/lib/services';
+import { formatErrorResponse } from '../utils/error-handler';
 
 interface UpdateFileProps {
   projectName: string;
@@ -45,30 +45,17 @@ const updateFileTool: ToolFunction<UpdateFileProps> = async ({
       throw new Error('content is required for replace and insert operations');
     }
 
-    // URL encode the file path to handle special characters correctly
-    const encodedFilePath = encodeURIComponent(filePath);
-
-    // Prepare the request payload
-    const payload: PatchProjectFileParams = {
-      filePath: encodedFilePath,
-      projectName,
-      startLine,
-      operation,
-    };
-
-    // Add optional parameters as needed
-    if (endLine !== undefined) {
-      payload.endLine = endLine;
-    }
-
-    if (newContent !== undefined) {
-      payload.newContent = newContent;
-    }
-
-    const apiClient = getApiClient();
+    const api = getApi();
 
     // Call the API endpoint to patch the file
-    const response = await apiClient.patchProjectFile(payload);
+    const response = await api.files.patchProjectFile({
+      projectName,
+      filePath,
+      startLine,
+      endLine,
+      newContent,
+      operation,
+    });
 
     // Return the result as a formatted response
     return {
@@ -88,21 +75,12 @@ const updateFileTool: ToolFunction<UpdateFileProps> = async ({
       ],
     };
   } catch (error) {
-    // Return the error as a formatted result
+    // Use the shared error handler to format the error
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(
-            {
-              error: true,
-              message: `Failed to update file ${filePath}: ${
-                error instanceof Error ? error.message : String(error)
-              }`,
-            },
-            null,
-            2
-          ),
+          text: formatErrorResponse(error, `Failed to update file ${filePath}`),
         },
       ],
     };

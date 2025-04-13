@@ -1,6 +1,7 @@
 import z from 'zod';
 import type { McpServer, ToolFunction } from '..';
-import { getApiClient } from '@/lib/services';
+import { getApi } from '@/lib/services';
+import { formatErrorResponse } from '../utils/error-handler';
 
 interface WriteFileProps {
   filePath: string;
@@ -21,8 +22,8 @@ const writeFileTool: ToolFunction<WriteFileProps> = async ({
   content,
 }) => {
   try {
-    const apiClient = getApiClient();
-    const result = await apiClient.writeProjectFile({
+    const api = getApi();
+    const result = await api.files.writeProjectFile({
       projectName,
       filePath,
       content,
@@ -33,26 +34,25 @@ const writeFileTool: ToolFunction<WriteFileProps> = async ({
       content: [
         {
           type: 'text',
-          text: JSON.stringify(result, null, 2),
+          text: JSON.stringify(
+            {
+              success: true,
+              message: `File ${filePath} successfully written.`,
+              data: result,
+            },
+            null, 
+            2
+          ),
         },
       ],
     };
   } catch (error) {
-    // Return the error as a formatted result
+    // Use the shared error handler to format the error
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(
-            {
-              error: true,
-              message: `Failed to write file ${filePath}: ${
-                error instanceof Error ? error.message : String(error)
-              }`,
-            },
-            null,
-            2
-          ),
+          text: formatErrorResponse(error, `Failed to write file ${filePath}`),
         },
       ],
     };

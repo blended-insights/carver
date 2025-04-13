@@ -1,6 +1,7 @@
 import z from 'zod';
 import type { McpServer, ToolFunction } from '..';
-import { getApiClient } from '@/lib/services';
+import { getApi } from '@/lib/services';
+import { formatErrorResponse } from '../utils/error-handler';
 
 interface SearchFilesProps {
   projectName: string;
@@ -21,8 +22,8 @@ const searchFilesTool: ToolFunction<SearchFilesProps> = async ({
   searchType,
 }) => {
   try {
-    const apiClient = getApiClient();
-    const searchResults = await apiClient.getProjectFiles({
+    const api = getApi();
+    const searchResults = await api.files.getProjectFiles({
       projectName,
       searchTerm,
       searchType,
@@ -33,25 +34,29 @@ const searchFilesTool: ToolFunction<SearchFilesProps> = async ({
       content: [
         {
           type: 'text',
-          text: JSON.stringify(searchResults, null, 2),
+          text: JSON.stringify(
+            {
+              success: true, 
+              message: `Found ${searchResults.length} file(s) matching '${searchTerm}'${
+                searchType ? ` in ${searchType} search` : ''
+              }`,
+              data: searchResults
+            }, 
+            null, 
+            2
+          ),
         },
       ],
     };
   } catch (error) {
-    // Return the error as a formatted result
+    // Use the shared error handler to format the error
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(
-            {
-              error: true,
-              message: `Failed to search files in project ${projectName}: ${
-                error instanceof Error ? error.message : String(error)
-              }`,
-            },
-            null,
-            2
+          text: formatErrorResponse(
+            error, 
+            `Failed to search files in project ${projectName} for term '${searchTerm}'`
           ),
         },
       ],

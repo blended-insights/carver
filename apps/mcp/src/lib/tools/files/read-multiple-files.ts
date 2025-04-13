@@ -1,6 +1,7 @@
 import z from 'zod';
 import type { McpServer, ToolFunction } from '..';
-import { getApiClient } from '@/lib/services';
+import { getApi } from '@/lib/services';
+import { formatErrorResponse } from '../utils/error-handler';
 
 interface ReadMultipleFilesProps {
   filePaths: string[];
@@ -21,37 +22,44 @@ const readMultipleFilesTool: ToolFunction<ReadMultipleFilesProps> = async ({
   fields = ['content', 'hash', 'lastModified'],
 }) => {
   try {
-    const apiClient = getApiClient();
+    const api = getApi();
+    
+    // Process files concurrently with Promise.all
     const responses = await Promise.all(
-      filePaths.map((filePath) =>
-        apiClient.getProjectFile({ projectName, filePath, fields })
-      )
+      filePaths.map(async (filePath) => {
+        try {
+          const fileData = await api.files.getProjectFile({ 
+            projectName, 
+            filePath, 
+            fields 
+          });
+          
+          return {
+            path: filePath,
+            ...fileData,
+            error: false
+          };
+        } catch (err) {
+          // Handle individual file errors but continue processing others
+          console.error(`Error reading file ${filePath}:`, err);
+          return {
+            path: filePath,
+            error: true,
+            message: err instanceof Error ? err.message : String(err)
+          };
+        }
+      })
     );
 
-    // Format the response with file paths for easier identification
-    const formattedResponses = responses.map((response, index) => ({
-      path: filePaths[index],
-      ...response,
-    }));
-
-    const text = JSON.stringify(formattedResponses, null, 2);
+    const text = JSON.stringify(responses, null, 2);
     return { content: [{ type: 'text', text }] };
   } catch (error) {
-    // Return the error as a formatted result
+    // Use the shared error handler to format the error
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(
-            {
-              error: true,
-              message: `Failed to read files: ${
-                error instanceof Error ? error.message : String(error)
-              }`,
-            },
-            null,
-            2
-          ),
+          text: formatErrorResponse(error, `Failed to read multiple files`),
         },
       ],
     };

@@ -1,6 +1,7 @@
 import z from 'zod';
 import type { McpServer, ToolFunction } from '..';
-import { getApiClient } from '@/lib/services';
+import { getApi } from '@/lib/services';
+import { formatErrorResponse } from '../utils/error-handler';
 
 interface ReadFileProps {
   filePath: string;
@@ -21,8 +22,8 @@ const readFileTool: ToolFunction<ReadFileProps> = async ({
   fields = ['content', 'hash', 'lastModified'],
 }) => {
   try {
-    const apiClient = getApiClient();
-    const fileData = await apiClient.getProjectFile({
+    const api = getApi();
+    const fileData = await api.files.getProjectFile({
       projectName,
       filePath,
       fields,
@@ -38,21 +39,12 @@ const readFileTool: ToolFunction<ReadFileProps> = async ({
       ],
     };
   } catch (error) {
-    // Return the error as a formatted result
+    // Use the shared error handler to format the error
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(
-            {
-              error: true,
-              message: `Failed to read file ${filePath}: ${
-                error instanceof Error ? error.message : String(error)
-              }`,
-            },
-            null,
-            2
-          ),
+          text: formatErrorResponse(error, `Failed to read file ${filePath}`),
         },
       ],
     };

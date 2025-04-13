@@ -1,6 +1,7 @@
 import z from 'zod';
 import type { McpServer, ToolFunction } from '..';
-import { getApiClient } from '@/lib/services';
+import { getApi } from '@/lib/services';
+import { formatErrorResponse } from '../utils/error-handler';
 
 interface GitDiffUnstagedProps {
   projectName: string;
@@ -15,33 +16,51 @@ const gitDiffUnstagedTool: ToolFunction<GitDiffUnstagedProps> = async ({
   projectName,
 }) => {
   try {
-    const apiClient = getApiClient();
-    const diff = await apiClient.gitDiff({ projectName });
+    const api = getApi();
+    const diff = await api.git.gitDiff({ projectName });
+
+    // Check if there are unstaged changes
+    const noChangesMessage = "No unstaged changes found";
+    const hasChanges = diff && diff.trim() !== '';
 
     // Return the diff output as a formatted result
-    return {
-      content: [
-        {
-          type: 'text',
-          text: diff,
-        },
-      ],
-    };
+    if (hasChanges) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: diff,
+          },
+        ],
+      };
+    } else {
+      // Return a message when there are no unstaged changes
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(
+              {
+                success: true,
+                message: noChangesMessage,
+                data: { diff: "" }
+              },
+              null,
+              2
+            ),
+          },
+        ],
+      };
+    }
   } catch (error) {
-    // Return the error as a formatted result
+    // Use the shared error handler to format the error
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(
-            {
-              error: true,
-              message: `Failed to get unstaged diff for ${projectName}: ${
-                error instanceof Error ? error.message : String(error)
-              }`,
-            },
-            null,
-            2
+          text: formatErrorResponse(
+            error, 
+            `Failed to get unstaged diff for ${projectName}`
           ),
         },
       ],
@@ -55,7 +74,7 @@ const gitDiffUnstagedTool: ToolFunction<GitDiffUnstagedProps> = async ({
  */
 export function registerGitDiffUnstagedTool(server: McpServer) {
   server.tool(
-    'git_diff_unstaged',
+    'carver-git-diff-unstaged',
     'Shows changes in the working directory that are not yet staged',
     {
       projectName: z.string().describe('The name of the project'),

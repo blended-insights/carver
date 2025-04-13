@@ -1,6 +1,7 @@
 import z from 'zod';
 import type { McpServer, ToolFunction } from '..';
-import { getApiClient } from '@/lib/services';
+import { getApi } from '@/lib/services';
+import { formatErrorResponse } from '../utils/error-handler';
 
 interface GitShowProps {
   projectName: string;
@@ -18,33 +19,48 @@ const gitShowTool: ToolFunction<GitShowProps> = async ({
   revision,
 }) => {
   try {
-    const apiClient = getApiClient();
-    const result = await apiClient.gitShow({ projectName, revision });
+    const api = getApi();
+    const result = await api.git.gitShow({ projectName, revision });
 
-    // Return the show result as a formatted result
-    return {
-      content: [
-        {
-          type: 'text',
-          text: result,
-        },
-      ],
-    };
+    // Check if there's any content in the result
+    if (result && result.trim() !== '') {
+      // Return the show result as a formatted result
+      return {
+        content: [
+          {
+            type: 'text',
+            text: result,
+          },
+        ],
+      };
+    } else {
+      // If the result is empty, return a more informative message
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(
+              {
+                success: true,
+                message: `No content found for revision ${revision}`,
+                data: { result: "" }
+              },
+              null,
+              2
+            ),
+          },
+        ],
+      };
+    }
   } catch (error) {
-    // Return the error as a formatted result
+    // Use the shared error handler to format the error
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(
-            {
-              error: true,
-              message: `Failed to show commit ${revision} for ${projectName}: ${
-                error instanceof Error ? error.message : String(error)
-              }`,
-            },
-            null,
-            2
+          text: formatErrorResponse(
+            error, 
+            `Failed to show commit ${revision} for ${projectName}`
           ),
         },
       ],
@@ -58,7 +74,7 @@ const gitShowTool: ToolFunction<GitShowProps> = async ({
  */
 export function registerGitShowTool(server: McpServer) {
   server.tool(
-    'git_show',
+    'carver-git-show',
     'Shows the contents of a commit',
     {
       projectName: z.string().describe('The name of the project'),

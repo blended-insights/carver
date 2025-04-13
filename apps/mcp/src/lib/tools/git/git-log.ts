@@ -1,6 +1,7 @@
 import z from 'zod';
 import type { McpServer, ToolFunction } from '..';
-import { getApiClient } from '@/lib/services';
+import { getApi } from '@/lib/services';
+import { formatErrorResponse } from '../utils/error-handler';
 
 interface GitLogProps {
   projectName: string;
@@ -18,33 +19,35 @@ const gitLogTool: ToolFunction<GitLogProps> = async ({
   maxCount = 10,
 }) => {
   try {
-    const apiClient = getApiClient();
-    const logs = await apiClient.gitLog({ projectName, maxCount });
+    const api = getApi();
+    const logs = await api.git.gitLog({ projectName, maxCount });
 
     // Return the log data as a formatted result
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(logs, null, 2),
+          text: JSON.stringify(
+            {
+              success: true,
+              message: `Retrieved ${logs.total} commit logs (limited to ${maxCount})`,
+              data: logs
+            },
+            null,
+            2
+          ),
         },
       ],
     };
   } catch (error) {
-    // Return the error as a formatted result
+    // Use the shared error handler to format the error
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(
-            {
-              error: true,
-              message: `Failed to get commit logs for ${projectName}: ${
-                error instanceof Error ? error.message : String(error)
-              }`,
-            },
-            null,
-            2
+          text: formatErrorResponse(
+            error, 
+            `Failed to get commit logs for ${projectName}`
           ),
         },
       ],
@@ -58,7 +61,7 @@ const gitLogTool: ToolFunction<GitLogProps> = async ({
  */
 export function registerGitLogTool(server: McpServer) {
   server.tool(
-    'git_log',
+    'carver-git-log',
     'Shows the commit logs',
     {
       projectName: z.string().describe('The name of the project'),

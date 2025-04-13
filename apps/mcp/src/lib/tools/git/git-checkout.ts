@@ -1,6 +1,7 @@
 import z from 'zod';
 import type { McpServer, ToolFunction } from '..';
-import { getApiClient } from '@/lib/services';
+import { getApi } from '@/lib/services';
+import { formatErrorResponse } from '../utils/error-handler';
 
 interface GitCheckoutProps {
   projectName: string;
@@ -18,33 +19,35 @@ const gitCheckoutTool: ToolFunction<GitCheckoutProps> = async ({
   branchName,
 }) => {
   try {
-    const apiClient = getApiClient();
-    const result = await apiClient.gitCheckout({ projectName, branchName });
+    const api = getApi();
+    const result = await api.git.gitCheckout({ projectName, branchName });
 
     // Return the checkout result as a formatted result
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(result, null, 2),
+          text: JSON.stringify(
+            {
+              success: true,
+              message: `Successfully checked out branch '${branchName}'`,
+              data: result
+            },
+            null,
+            2
+          ),
         },
       ],
     };
   } catch (error) {
-    // Return the error as a formatted result
+    // Use the shared error handler to format the error
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(
-            {
-              error: true,
-              message: `Failed to checkout branch ${branchName} for ${projectName}: ${
-                error instanceof Error ? error.message : String(error)
-              }`,
-            },
-            null,
-            2
+          text: formatErrorResponse(
+            error, 
+            `Failed to checkout branch ${branchName} for ${projectName}`
           ),
         },
       ],
@@ -58,7 +61,7 @@ const gitCheckoutTool: ToolFunction<GitCheckoutProps> = async ({
  */
 export function registerGitCheckoutTool(server: McpServer) {
   server.tool(
-    'git_checkout',
+    'carver-git-checkout',
     'Switches branches',
     {
       projectName: z.string().describe('The name of the project'),
