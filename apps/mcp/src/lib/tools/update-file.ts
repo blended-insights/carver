@@ -8,7 +8,7 @@ interface UpdateFileProps {
   filePath: string;
   startLine: number;
   endLine?: number;
-  content?: string;
+  newContent?: string;
   operation?: 'replace' | 'insert' | 'delete';
 }
 
@@ -18,7 +18,7 @@ interface UpdateFileProps {
  * @param filePath Path of the file to update
  * @param startLine Start line number (1-based)
  * @param endLine End line number (1-based, inclusive, required for replace/delete)
- * @param content New content (required for replace/insert)
+ * @param newContent New content (required for replace/insert)
  * @param operation Type of operation: 'replace' (default), 'insert', or 'delete'
  * @returns Content object with the result of the operation
  */
@@ -27,7 +27,7 @@ const updateFileTool: ToolFunction<UpdateFileProps> = async ({
   filePath,
   startLine,
   endLine,
-  content,
+  newContent,
   operation = 'replace',
 }) => {
   try {
@@ -41,7 +41,7 @@ const updateFileTool: ToolFunction<UpdateFileProps> = async ({
       throw new Error('endLine is required for replace and delete operations');
     }
 
-    if ((operation === 'replace' || operation === 'insert') && !content) {
+    if ((operation === 'replace' || operation === 'insert') && !newContent) {
       throw new Error('content is required for replace and insert operations');
     }
 
@@ -61,8 +61,8 @@ const updateFileTool: ToolFunction<UpdateFileProps> = async ({
       payload.endLine = endLine;
     }
 
-    if (content !== undefined) {
-      payload.content = content;
+    if (newContent !== undefined) {
+      payload.newContent = newContent;
     }
 
     const apiClient = getApiClient();
@@ -124,19 +124,19 @@ export function registerUpdateFileTool(server: McpServer) {
         .number()
         .int()
         .positive()
-        .describe('Start line number (1-based).'),
+        .describe('The first line to replace (inclusive)'),
       endLine: z
         .number()
         .int()
         .positive()
         .optional()
-        .describe(
-          'End line number (1-based, inclusive, required for replace/delete operations).'
-        ),
-      content: z
+        .describe('The last line to replace (inclusive)'),
+      newContent: z
         .string()
         .optional()
-        .describe('New content (required for replace and insert operations).'),
+        .describe(
+          'The entire new content that will replace lines startLine through endLine'
+        ),
       operation: z
         .enum(['replace', 'insert', 'delete'])
         .optional()

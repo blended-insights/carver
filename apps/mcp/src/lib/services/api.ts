@@ -168,7 +168,7 @@ export interface PatchProjectFileParams extends BaseParams {
   filePath: string;
   startLine: number;
   endLine?: number;
-  content?: string;
+  newContent?: string;
   operation?: 'replace' | 'insert' | 'delete';
 }
 
@@ -627,7 +627,7 @@ export class CarverApiClient {
     filePath,
     startLine,
     endLine,
-    content,
+    newContent,
     operation = 'replace',
   }: PatchProjectFileParams): Promise<WriteFileResponse> {
     try {
@@ -638,7 +638,7 @@ export class CarverApiClient {
       const payload: {
         startLine: number;
         endLine?: number;
-        content?: string;
+        newContent?: string;
         operation: 'replace' | 'insert' | 'delete';
       } = {
         startLine,
@@ -650,8 +650,8 @@ export class CarverApiClient {
         payload.endLine = endLine;
       }
 
-      if (content !== undefined) {
-        payload.content = content;
+      if (newContent !== undefined) {
+        payload.newContent = newContent;
       }
 
       const response = await this.client.patch<ApiResponse<WriteFileResponse>>(

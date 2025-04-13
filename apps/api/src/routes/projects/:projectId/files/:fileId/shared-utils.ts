@@ -1,12 +1,9 @@
-import {
-  fileSystemService,
-  neo4jService,
-  queueService,
-  redisService,
-} from '@/services';
+import { fileSystemService, queueService, redisService } from '@/services';
 import logger from '@/utils/logger';
+import buildProjectPath from '@/utils/path-builder';
 import { Response } from 'express';
-import path from 'path';
+
+const { USER_MOUNT } = process.env;
 
 /**
  * Ensures a file is available in Redis, loading from disk if needed
@@ -40,16 +37,15 @@ export async function ensureFileInRedis(
     logger.warn(`File ${fileId} not found in Redis for project ${projectId}`);
 
     // Get project path from Neo4j
-    const project = await neo4jService.getProjectByName(projectId);
-    if (!project || !project.path) {
+    if (!USER_MOUNT) {
       return {
         success: false,
-        message: `Project ${projectId} not found`,
+        message: `User mount not configured. Cannot load file ${fileId} from disk.`,
       };
     }
 
     // Check if file exists on disk
-    const filePath = path.join(project.path, fileId);
+    const filePath = buildProjectPath(projectId, fileId);
     if (!fileSystemService.fileExists(filePath)) {
       return {
         success: false,
@@ -128,25 +124,19 @@ export async function updateFileAndQueueWrite(
       `Successfully updated file ${fileId} in Redis for project ${projectId}`
     );
 
-    // Get project path from Neo4j for the queue job
-    const project = await neo4jService.getProjectByName(projectId);
-    
-    if (!project || !project.path) {
+    if (!USER_MOUNT) {
       return res.status(404).json({
         success: false,
         message: `Project ${projectId} not found`,
       });
     }
-    
-    // Get disk path for the project
-    const diskPath = project.path;
 
     // Add file content update job to queue
     const job = await queueService.addFileJob(
       projectId,
       fileId,
       content,
-      diskPath,
+      buildProjectPath(projectId)
     );
 
     // Prepare response message
