@@ -21,16 +21,16 @@ node dist/apps/mcp/main.js
 
 The MCP server supports the following command-line arguments:
 
-| Option | Alias | Description |
-|--------|-------|-------------|
-| `--verbose` | `-v` | Enable verbose logging |
-| `--debug` | `-d` | Enable debug mode |
-| `--host <address>` | `-H` | Host address for HTTP transport (defaults to localhost) |
-| `--port <number>` | `-p` | Port for HTTP transport (if used instead of stdio) |
-| `--config <path>` | `-c` | Path to configuration file |
-| `--log-level <level>` | `-l` | Log level (error, warn, info, debug) |
-| `--help` | `-h` | Display help information |
-| `--version` | | Display version information |
+| Option                | Alias | Description                                             |
+| --------------------- | ----- | ------------------------------------------------------- |
+| `--verbose`           | `-v`  | Enable verbose logging                                  |
+| `--debug`             | `-d`  | Enable debug mode                                       |
+| `--host <address>`    | `-H`  | Host address for HTTP transport (defaults to localhost) |
+| `--port <number>`     | `-p`  | Port for HTTP transport (if used instead of stdio)      |
+| `--config <path>`     | `-c`  | Path to configuration file                              |
+| `--log-level <level>` | `-l`  | Log level (error, warn, info, debug)                    |
+| `--help`              | `-h`  | Display help information                                |
+| `--version`           |       | Display version information                             |
 
 Examples:
 
@@ -54,43 +54,41 @@ The Carver MCP server provides the following tools:
 
 ### File Operations
 
-| Tool Name | Description |
-|-----------|-------------|
-| `carver-read-file` | Read a single file from a project |
-| `carver-read-multiple-files` | Read multiple files from a project |
-| `carver-write-file` | Write content to a file in a project |
-| `carver-update-file` | Update a file in a project using line-based PATCH operations |
-| `carver-create-folder` | Create a new folder in a project |
-| `carver-get-folder-items` | Get items (files and folders) in a specific project folder |
-| `carver-get-folder-tree` | Get a recursive tree view of a project folder's contents |
-| `carver-get-file-imports` | Get imports from a specific file in a project |
-| `carver-search-files` | Search for files in a project based on search term and optional search type |
-
-
+| Tool Name                    | Description                                                                 |
+| ---------------------------- | --------------------------------------------------------------------------- |
+| `carver-read-file`           | Read a single file from a project                                           |
+| `carver-read-multiple-files` | Read multiple files from a project                                          |
+| `carver-write-file`          | Write content to a file in a project                                        |
+| `carver-update-file`         | Update a file in a project using line-based PATCH operations                |
+| `carver-create-folder`       | Create a new folder in a project                                            |
+| `carver-get-folder-items`    | Get items (files and folders) in a specific project folder                  |
+| `carver-get-folder-tree`     | Get a recursive tree view of a project folder's contents                    |
+| `carver-get-file-imports`    | Get imports from a specific file in a project                               |
+| `carver-search-files`        | Search for files in a project based on search term and optional search type |
 
 ### Git Operations
 
-| Tool Name | Description |
-|-----------|-------------|
-| `git_status` | Shows the working tree status |
+| Tool Name           | Description                                                    |
+| ------------------- | -------------------------------------------------------------- |
+| `git_status`        | Shows the working tree status                                  |
 | `git_diff_unstaged` | Shows changes in the working directory that are not yet staged |
-| `git_diff_staged` | Shows changes that are staged for commit |
-| `git_diff` | Shows differences between branches or commits |
-| `git_commit` | Records changes to the repository |
-| `git_add` | Adds file contents to the staging area |
-| `git_reset` | Unstages all staged changes |
-| `git_log` | Shows the commit logs |
-| `git_create_branch` | Creates a new branch from an optional base branch |
-| `git_checkout` | Switches branches |
-| `git_show` | Shows the contents of a commit |
+| `git_diff_staged`   | Shows changes that are staged for commit                       |
+| `git_diff`          | Shows differences between branches or commits                  |
+| `git_commit`        | Records changes to the repository                              |
+| `git_add`           | Adds file contents to the staging area                         |
+| `git_reset`         | Unstages all staged changes                                    |
+| `git_log`           | Shows the commit logs                                          |
+| `git_create_branch` | Creates a new branch from an optional base branch              |
+| `git_checkout`      | Switches branches                                              |
+| `git_show`          | Shows the contents of a commit                                 |
 
 ### Prompts
 
 The Carver MCP server provides the following prompt generators:
 
-| Prompt Name | Description |
-|-------------|-------------|
-| `carver-bug-report-prompt` | Generates a formatted bug report with description, expected and actual results |
+| Prompt Name                 | Description                                                                                            |
+| --------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `carver-bug-report-prompt`  | Generates a formatted bug report with description, expected and actual results                         |
 | `carver-enhancement-prompt` | Generates a formatted enhancement request with description, affected files, and optional justification |
 
 ## Configuration File
@@ -113,18 +111,19 @@ See `config.example.json` for a template.
 
 The following environment variables are supported:
 
-| Variable | Description |
-|----------|-------------|
-| `CARVER_VERBOSE` | Set to "true" to enable verbose logging |
-| `CARVER_DEBUG` | Set to "true" to enable debug mode |
-| `CARVER_HOST` | Host address for HTTP transport |
-| `CARVER_PORT` | Port number for HTTP transport |
-| `CARVER_LOG_LEVEL` | Log level (error, warn, info, debug) |
-| `NODE_ENV` | Environment (development, production, test) |
+| Variable           | Description                                 |
+| ------------------ | ------------------------------------------- |
+| `CARVER_VERBOSE`   | Set to "true" to enable verbose logging     |
+| `CARVER_DEBUG`     | Set to "true" to enable debug mode          |
+| `CARVER_HOST`      | Host address for HTTP transport             |
+| `CARVER_PORT`      | Port number for HTTP transport              |
+| `CARVER_LOG_LEVEL` | Log level (error, warn, info, debug)        |
+| `NODE_ENV`         | Environment (development, production, test) |
 
 ## Configuration Priority
 
 Configuration options are applied with the following priority (highest to lowest):
+
 1. Command-line arguments
 2. Environment variables
 3. Configuration file
