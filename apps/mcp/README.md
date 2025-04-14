@@ -54,22 +54,28 @@ The Carver MCP server provides the following tools:
 
 ### File Operations
 
-| Tool Name                    | Description                                                                 |
-| ---------------------------- | --------------------------------------------------------------------------- |
-| `carver-read-file`           | Read a single file from a project                                           |
-| `carver-read-multiple-files` | Read multiple files from a project                                          |
-| `carver-write-file`          | Write content to a file in a project                                        |
-| `carver-update-file`         | Update a file in a project using line-based PATCH operations                |
-| `carver-get-file-imports`    | Get imports from a specific file in a project                               |
-| `carver-search-files`        | Search for files in a project based on search term and optional search type |
+| Tool Name                 | Description                                                                 |
+| ------------------------- | --------------------------------------------------------------------------- |
+| `git_show`                | Shows the contents of a commit                                              |
+| `carver-write-file`       | Write content to a file in a project                                        |
+| `carver-update-file`      | Update a file in a project using line-based PATCH operations                |
+| `carver-get-file-imports` | Get imports from a specific file in a project                               |
+| `carver-search-files`     | Search for files in a project based on search term and optional search type |
 
 ### Folder Operations
 
-| Tool Name                    | Description                                                                 |
-| ---------------------------- | --------------------------------------------------------------------------- |
-| `carver-create-folder`       | Create a new folder in a project                                            |
-| `carver-get-folder-items`    | Get items (files and folders) in a specific project folder                  |
-| `carver-get-folder-tree`     | Get a recursive tree view of a project folder's contents                    |
+| Tool Name                 | Description                                                |
+| ------------------------- | ---------------------------------------------------------- |
+| `carver-create-folder`    | Create a new folder in a project                           |
+| `carver-get-folder-items` | Get items (files and folders) in a specific project folder |
+| `carver-get-folder-tree`  | Get a recursive tree view of a project folder's contents   |
+
+### Commands Operations
+
+| Tool Name                 | Description                                     |
+| ------------------------- | ----------------------------------------------- |
+| `carver-commands-list`    | List available commands for a project           |
+| `carver-commands-execute` | Execute a command in a project's root directory |
 
 ### Git Operations
 
@@ -105,15 +111,19 @@ You can provide a configuration file using the `--config` option. The file shoul
   "verbose": false,
   "debug": false,
   "logLevel": "info",
-  "environment": "development",
-  "port": 9230
-}
 ```
 
-See `config.example.json` for a template.
+apps/mcp/src/lib/services/api/
+├── client.ts # Core CarverApiClient with HTTP methods
+├── commands.ts # Commands-related API operations
+├── file.ts # File-related API operations
+├── folder.ts # Folder-related API operations
+├── git.ts # Git-related API operations
+├── index.ts # Main exports and integrated CarverApi client
+├── project.ts # Project-related API operations
+└── types.ts # Type definitions for all API interactions
 
-## Environment Variables
-
+```
 The following environment variables are supported:
 
 | Variable           | Description                                 |
@@ -127,27 +137,33 @@ The following environment variables are supported:
 
 ## Configuration Priority
 
-Configuration options are applied with the following priority (highest to lowest):
+const api = getApi();
 
-1. Command-line arguments
-2. Environment variables
-3. Configuration file
-4. Default values
-
-## API Client Architecture
-
-The Carver MCP API client is organized in a modular structure for better maintainability and separation of concerns:
+// Use the API with namespaced methods
+const files = await api.files.getProjectFiles({ projectName: 'myProject' });
+const status = await api.git.getGitStatus({ projectName: 'myProject' });
+const allowedCommands = await api.commands.listCommands({ projectName: 'myProject' });
+const commandResult = await api.commands.executeCommand({
+  projectName: 'myProject',
+  command: 'npm',
+  args: ['run', 'test']
+});
+// Import specific clients directly if needed
+import { FileApiClient, CommandsApiClient } from 'apps/mcp/src/lib/services/api';
+import { CarverApiClient } from 'apps/mcp/src/lib/services/api';
 
 ```
+
 apps/mcp/src/lib/services/api/
-├── client.ts     # Core CarverApiClient with HTTP methods
-├── file.ts       # File-related API operations
-├── folder.ts     # Folder-related API operations
-├── git.ts        # Git-related API operations
-├── index.ts      # Main exports and integrated CarverApi client
-├── project.ts    # Project-related API operations
-└── types.ts      # Type definitions for all API interactions
-```
+├── client.ts # Core CarverApiClient with HTTP methods
+├── file.ts # File-related API operations
+├── folder.ts # Folder-related API operations
+├── git.ts # Git-related API operations
+├── index.ts # Main exports and integrated CarverApi client
+├── project.ts # Project-related API operations
+└── types.ts # Type definitions for all API interactions
+
+````
 
 ### Usage Examples
 
@@ -168,4 +184,4 @@ import { CarverApiClient } from 'apps/mcp/src/lib/services/api';
 
 const apiClient = new CarverApiClient();
 const fileClient = new FileApiClient(apiClient);
-```
+````

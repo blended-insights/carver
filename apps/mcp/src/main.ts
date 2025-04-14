@@ -12,7 +12,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 // Load config first to get server options
 import { getConfig } from './lib/config';
 const config = getConfig();
- 
+
 import { registerPrompts } from './lib/prompts';
 
 // Import tool registrations from tools module
@@ -20,6 +20,7 @@ import {
   registerFileTools,
   registerFolderTools,
   registerGitTools,
+  registerCommandTools,
 } from './lib/tools';
 
 // Import resource registrations from resources module
@@ -28,7 +29,6 @@ import { registerResources } from './lib/resources';
 // Import logger and services modules
 import { initLogger, logger } from './lib/logger';
 import { initializeServices } from './lib/services';
-
 
 const server = new McpServer({
   name: 'carver', // Server name
@@ -55,6 +55,9 @@ registerFolderTools(server); // Register all folder tools
 // Register git operation tools
 registerGitTools(server); // Register all Git tools
 
+// Register command operation tools
+registerCommandTools(server); // Register all Command tools
+
 /**
  * Main function that initializes and starts the server
  * Uses stdio for transport layer communication
@@ -75,7 +78,7 @@ async function main() {
   initializeServices();
 
   // Initialize logger with server instance
-  initLogger(server); 
+  initLogger(server);
 
   // Log startup information with appropriate verbosity
   logger.info('Carver MCP Server running on stdio 💥');

@@ -114,6 +114,26 @@ export interface WriteFileResponse {
 }
 
 /**
+ * Commands list response data structure
+ */
+export interface CommandsListResponse {
+  allowedCommands: string[];
+  config: {
+    source: string;
+    rawValue: string;
+  };
+}
+
+/**
+ * Command execution response data structure
+ */
+export interface CommandExecutionResponse {
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+}
+
+/**
  * Base parameters for API requests
  */
 export interface BaseParams {
@@ -215,9 +235,22 @@ export interface PatchProjectFileParams extends BaseParams {
 }
 
 /**
+ * Parameters for listCommands
+ */
+export type ListCommandsParams = BaseParams;
+
+/**
+ * Parameters for executeCommand
+ */
+export interface ExecuteCommandParams extends BaseParams {
+  command: string;
+  args?: string[];
+}
+
+/**
  * Parameters for getGitStatus
  */
-export type GetGitStatusParams = BaseParams
+export type GetGitStatusParams = BaseParams;
 
 /**
  * Parameters for gitAddFiles
@@ -236,12 +269,12 @@ export interface GitCommitParams extends BaseParams {
 /**
  * Parameters for gitDiff
  */
-export type GitDiffParams = BaseParams
+export type GitDiffParams = BaseParams;
 
 /**
  * Parameters for gitDiffStaged
  */
-export type GitDiffStagedParams = BaseParams
+export type GitDiffStagedParams = BaseParams;
 
 /**
  * Parameters for gitLog
@@ -268,7 +301,7 @@ export interface GitCheckoutParams extends BaseParams {
 /**
  * Parameters for gitReset
  */
-export type GitResetParams = BaseParams
+export type GitResetParams = BaseParams;
 
 /**
  * Parameters for gitShow

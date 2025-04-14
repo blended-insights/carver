@@ -160,6 +160,7 @@ export function PromptBuilderModal({
       <Modal
         opened={opened}
         onClose={handleClose}
+        closeOnClickOutside={false}
         title="Prompt Builder"
         size="xxl"
         centered

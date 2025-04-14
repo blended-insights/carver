@@ -3,6 +3,7 @@ import { FileApiClient } from './file';
 import { FolderApiClient } from './folder';
 import { GitApiClient } from './git';
 import { ProjectApiClient } from './project';
+import { CommandsApiClient } from './commands';
 
 // Re-export all types
 export * from './types';
@@ -15,26 +16,31 @@ export { ApiError };
  */
 export class CarverApi {
   private readonly client: CarverApiClient;
-  
+
   /**
    * Project-related API operations
    */
   readonly projects: ProjectApiClient;
-  
+
   /**
    * File-related API operations
    */
   readonly files: FileApiClient;
-  
+
   /**
    * Folder-related API operations
    */
   readonly folders: FolderApiClient;
-  
+
   /**
    * Git-related API operations
    */
   readonly git: GitApiClient;
+
+  /**
+   * Commands-related API operations
+   */
+  readonly commands: CommandsApiClient;
 
   /**
    * Creates a new complete CarverApi instance
@@ -43,11 +49,12 @@ export class CarverApi {
    */
   constructor(host?: string, port?: number) {
     this.client = new CarverApiClient(host, port);
-    
+
     this.projects = new ProjectApiClient(this.client);
     this.files = new FileApiClient(this.client);
     this.folders = new FolderApiClient(this.client);
     this.git = new GitApiClient(this.client);
+    this.commands = new CommandsApiClient(this.client);
   }
 
   /**
@@ -97,3 +104,4 @@ export { FileApiClient } from './file';
 export { FolderApiClient } from './folder';
 export { GitApiClient } from './git';
 export { ProjectApiClient } from './project';
+export { CommandsApiClient } from './commands';

@@ -9,6 +9,9 @@ Carver consists of the following main components:
 ### API Server
 
 **Recent Updates:**
+
+- Added command tools to MCP: carver-commands-list and carver-commands-execute (April 13, 2025)
+- Fixed issue with the directory items query showing incorrect file types (April 08, 2025)
 - Added GET endpoint to expose allowed commands configuration (April 13, 2025)
 - Added command execution endpoint to run npm/npx commands on project root (April 13, 2025)
 - Enhanced file creation/update endpoint to store file data in Redis (April 12, 2025)
@@ -16,9 +19,6 @@ Carver consists of the following main components:
 - Fixed bug in directory tree query to correctly return recursive tree structure (April 10, 2025)
 - Enhanced file editing endpoint for better reliability (April 10, 2025)
 - Fixed bug where class methods were not being indexed as separate function nodes (April 08, 2025)
-- Fixed issue with the directory items query showing incorrect file types (April 08, 2025)
-- Fixed bug where class methods were not being indexed as separate function nodes (April 08, 2025)
-- Fixed issue with the directory items query showing incorrect file types (April 08, 2025)
 
 [See API Documentation](apps/api/README.md)
 
@@ -27,6 +27,7 @@ Carver consists of the following main components:
 The Carver MCP server provides file operations and project management capabilities over the Model Context Protocol.
 
 **Available Tools:**
+
 - File Operations (read, write, update, search)
 - Folder Operations (create, browse)
 - Git Operations (status, diff, commit, add, etc.)
@@ -39,6 +40,7 @@ The Carver MCP server provides file operations and project management capabiliti
 The Carver Dashboard is a user-friendly web interface for managing and monitoring file watcher processes.
 
 **Features:**
+
 - Real-time Updates: See file changes and watcher status in real-time
 - Interactive UI: Modern, developer-focused interface
 - Process Management: Start, stop, and restart watcher processes
@@ -60,12 +62,14 @@ Before running the Carver services, make sure you have:
 ### Installation
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/your-organization/carver.git
    cd carver
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
