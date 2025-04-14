@@ -64,11 +64,11 @@ router.use('/:processId', processIdRouter);
 // routes/watchers/:processId/index.ts - Process ID router
 router.use('/kill', killRouter);
 router.use('/restart', restartRouter);
-```
+
+````
 
 This approach makes the route organization more modular and maintainable.
-- **Sequential Processing**: Ensures jobs are processed one at a time
-- **Comprehensive Logging**: Detailed logging of job processing activities
+
 - **Verification Steps**: File operations include verification to ensure completeness
 
 See the full documentation in `apps/api/src/docs/QUEUE_SYSTEM_UPDATED.md` for details.
@@ -150,6 +150,10 @@ The API implements REST-compliant search functionality on the `/projects/:projec
     - Replace lines: `PATCH /projects/myproject/files/src/main.ts` with `{"startLine": 10, "endLine": 15, "content": "// new content", "operation": "replace"}`
     - Insert line: `PATCH /projects/myproject/files/src/main.ts` with `{"startLine": 10, "content": "// inserted line", "operation": "insert"}`
     - Delete lines: `PATCH /projects/myproject/files/src/main.ts` with `{"startLine": 10, "endLine": 15, "operation": "delete"}`
+- `GET /projects/:projectId/commands` - Get information about allowed commands
+  - Response:
+    - 200 OK with list of allowed commands and configuration information
+    - Example response: `{"success":true,"data":{"allowedCommands":["npm","npx","yarn","pnpm"],"config":{"source":"environment","rawValue":"npm,npx,yarn,pnpm"}}}`
 - `POST /projects/:projectId/commands` - Execute a command in the project's root directory
   - Request Body: JSON object with:
     - `command`: The command to execute (must be in the allowed list)
@@ -186,7 +190,7 @@ npm run dev:api
 
 # Build the project
 npx nx build api
-```
+````
 
 ### Adding New Routes
 

@@ -64,6 +64,26 @@ export interface CommandExecutionResult {
  */
 export class CommandExecutor {
   /**
+   * Get the list of allowed commands
+   * @returns Array of allowed command strings
+   */
+  public getAllowedCommands(): string[] {
+    return [...ALLOWED_COMMANDS]; // Return a copy to prevent modification
+  }
+
+  /**
+   * Get the configuration source of allowed commands
+   * @returns Configuration information including source and raw value
+   */
+  public getAllowedCommandsConfig(): { source: string; rawValue: string } {
+    const envValue = process.env.ALLOWED_COMMANDS;
+    return {
+      source: envValue ? 'environment' : 'default',
+      rawValue: envValue || 'npm,npx,yarn,pnpm',
+    };
+  }
+
+  /**
    * Execute a command with the given options
    * @param options Command execution options
    * @returns Result of command execution

@@ -9,6 +9,7 @@ Carver consists of the following main components:
 ### API Server
 
 **Recent Updates:**
+- Added GET endpoint to expose allowed commands configuration (April 13, 2025)
 - Added command execution endpoint to run npm/npx commands on project root (April 13, 2025)
 - Enhanced file creation/update endpoint to store file data in Redis (April 12, 2025)
 - Fixed reliability issue in the file processing queue (April 11, 2025)
