@@ -22,6 +22,7 @@ const schema = {
 type Schema = typeof schema;
 
 const generatePrompt = ({
+  projectName,
   description,
   affectedFiles,
   justification,
@@ -32,6 +33,8 @@ const generatePrompt = ({
     description,
     `\n### AFFECTED FILES`,
     affectedFiles,
+    `\n### PROJECT NAME`,
+    projectName,
   ];
 
   if (justification) {

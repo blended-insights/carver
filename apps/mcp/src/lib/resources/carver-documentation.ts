@@ -10,7 +10,8 @@ import z from 'zod';
 import { logger } from '../logger';
 import { Project } from '../services/api';
 
-const api = getApi();
+// Initialize API with longer cache TTL for documentation files (5 minutes)
+const api = getApi({ ttl: 300000 });
 
 let projects: Project[];
 
@@ -21,11 +22,13 @@ const createResourceURI = (projectName: string, fileName: string) => {
 
 const listResources: ListResourcesCallback = async () => {
   if (!projects) {
+    // Cache the projects list
     projects = await api.projects.getProjects();
   }
 
   const resourceList = await Promise.all(
     projects.map(async (project) => {
+      // Using the cached version of getProjectFiles
       const files = await api.files.getProjectFiles({
         projectName: project.name,
         searchTerm: '.md',
@@ -56,6 +59,8 @@ const readResources: ReadResourceTemplateCallback = async (uri) => {
   logger.info(
     `Reading file from project: ${projectName}, filePath: ${filePath}, uri: ${uri}`
   );
+  
+  // Using the cached version of getProjectFile
   const file = await api.files.getProjectFile({
     projectName,
     filePath,

@@ -5,12 +5,11 @@ import type {
   McpServer,
   ToolCallback,
 } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { logger } from '@/lib/logger';
 
 const schema = {
   projectName: z.string().describe('The name of the project.'),
-  filePaths: z
-    .array(z.string())
-    .describe('The paths of the files to read.'),
+  filePaths: z.array(z.string()).describe('The paths of the files to read.'),
   fields: z
     .array(z.enum(['content', 'hash', 'lastModified']))
     .optional()
@@ -35,29 +34,29 @@ const readMultipleFilesTool: ToolCallback<Schema> = async ({
 }) => {
   try {
     const api = getApi();
-    
+
     // Process files concurrently with Promise.all
     const responses = await Promise.all(
       filePaths.map(async (filePath) => {
         try {
-          const fileData = await api.files.getProjectFile({ 
-            projectName, 
-            filePath, 
-            fields 
+          const fileData = await api.files.getProjectFile({
+            projectName,
+            filePath,
+            fields,
           });
-          
+
           return {
             path: filePath,
             ...fileData,
-            error: false
+            error: false,
           };
         } catch (err) {
           // Handle individual file errors but continue processing others
-          console.error(`Error reading file ${filePath}:`, err);
+          logger.error(`Error reading file ${filePath}:`, { err });
           return {
             path: filePath,
             error: true,
-            message: err instanceof Error ? err.message : String(err)
+            message: err instanceof Error ? err.message : String(err),
           };
         }
       })

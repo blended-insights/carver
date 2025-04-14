@@ -15,6 +15,7 @@ const schema = {
 type Schema = typeof schema;
 
 const generatePrompt = ({
+  projectName,
   description,
   expectedResult,
   actualResult,
@@ -27,6 +28,8 @@ const generatePrompt = ({
     expectedResult,
     `\n### ACTUAL RESULTS`,
     actualResult,
+    `\n### PROJECT NAME`,
+    projectName,
   ].join('\n');
 
 /**

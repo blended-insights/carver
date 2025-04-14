@@ -6,6 +6,7 @@
 import { Command } from 'commander';
 import fs from 'fs';
 import path from 'path';
+import { logger } from './logger';
 
 export interface CarverConfig {
   // Server options
@@ -81,7 +82,7 @@ function loadConfigFile(configPath?: string): Partial<CarverConfig> {
     const fileContents = fs.readFileSync(resolvedPath, 'utf-8');
     return JSON.parse(fileContents) as Partial<CarverConfig>;
   } catch (error) {
-    console.error(`Error loading config file from ${configPath}:`, error);
+    logger.error(`Error loading config file from ${configPath}:`, {error});
     return {};
   }
 }
@@ -126,7 +127,7 @@ function validateLogLevel(value?: string): 'error' | 'warn' | 'info' | 'debug' {
     return level as 'error' | 'warn' | 'info' | 'debug';
   }
 
-  console.warn(
+  logger.warn(
     `Invalid log level: ${value}. Using default: ${defaultConfig.logLevel}`
   );
   return defaultConfig.logLevel;
