@@ -8,13 +8,14 @@ Carver consists of the following main components:
 
 ### API Server
 
-The Carver API package provides a RESTful API for the Carver codebase assistant using Express.js.
-
 **Recent Updates:**
+- Added command execution endpoint to run npm/npx commands on project root (April 13, 2025)
 - Enhanced file creation/update endpoint to store file data in Redis (April 12, 2025)
 - Fixed reliability issue in the file processing queue (April 11, 2025)
 - Fixed bug in directory tree query to correctly return recursive tree structure (April 10, 2025)
 - Enhanced file editing endpoint for better reliability (April 10, 2025)
+- Fixed bug where class methods were not being indexed as separate function nodes (April 08, 2025)
+- Fixed issue with the directory items query showing incorrect file types (April 08, 2025)
 - Fixed bug where class methods were not being indexed as separate function nodes (April 08, 2025)
 - Fixed issue with the directory items query showing incorrect file types (April 08, 2025)
 

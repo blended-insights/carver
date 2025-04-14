@@ -4,6 +4,7 @@ import filesRouter from './files';
 import foldersRouter from './folders';
 import itemsRouter from './items';
 import gitRouter from './git';
+import commandsRouter from './commands';
 
 const router = Router({ mergeParams: true });
 
@@ -17,5 +18,6 @@ router.use('/files', filesRouter);
 router.use('/folders', foldersRouter);
 router.use('/items', itemsRouter);
 router.use('/git', gitRouter);
+router.use('/commands', commandsRouter);
 
 export default router;

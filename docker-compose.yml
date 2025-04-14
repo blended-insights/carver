@@ -42,6 +42,7 @@ services:
       - redis
       - neo4j
     environment:
+      ALLOWED_COMMANDS: npm,npx
       HOST: 0.0.0.0
       NODE_ENV: production
       NEO4J_URI: bolt://neo4j:7687

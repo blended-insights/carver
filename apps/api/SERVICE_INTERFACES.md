@@ -4,6 +4,15 @@ This document outlines the service interfaces implemented in the Carver Watcher 
 
 ## Updates and Changes
 
+### April 13, 2025 - Command Execution Service and Endpoint
+
+- Added new CommandExecutor service for secure command execution in project directories
+- Implemented POST /projects/:projectId/commands endpoint for running shell commands
+- Added security by restricting execution to an allowlist of safe commands through the ALLOWED_COMMANDS environment variable (defaults to "npm,npx,yarn,pnpm")
+- Commands are executed in the project's root directory with appropriate error handling
+- Implemented proper validation for command arguments and project existence
+- Service can be easily configured by updating the environment variable without code changes
+
 ### April 10, 2025 - Directory Tree Query Improvement
 
 - Fixed recursive directory tree query to correctly return all descendants
@@ -175,6 +184,37 @@ interface ISeederFunction {
 }
 ```
 
+### ICommandExecutor
+
+This interface defines operations related to secure command execution:
+
+```typescript
+interface ICommandExecutor {
+  executeCommand(options: CommandExecutionOptions): Promise<CommandExecutionResult>;
+}
+
+interface CommandExecutionOptions {
+  command: string;  // Command to execute (must be in allowlist)
+  args: string[];   // Arguments to pass to the command
+  cwd: string;      // Working directory where command will be executed
+  timeout?: number; // Optional timeout in milliseconds
+}
+
+interface CommandExecutionResult {
+  stdout: string;   // Standard output from the command
+  stderr: string;   // Standard error from the command
+  exitCode: number; // Exit code of the command
+}
+```
+
+**Responsibilities:**
+
+- Secure command execution with an allowlist
+- Running commands in project directories
+- Handling command execution errors
+- Capturing command output (stdout/stderr)
+- Setting appropriate timeout for commands
+
 ### FunctionNode Interface
 
 The FunctionNode interface has been enhanced to support class methods:
@@ -200,7 +240,6 @@ Class methods are now indexed as both:
 - Processing project files for graph database storage
 - Creating version-tracked relationships
 - Handling individual file changes
-- Managing file deletion events
 - Reporting processing status
 
 ## Benefits of Service Interfaces
@@ -309,6 +348,63 @@ if (!content) {
 if (fileSystemService.isTypeScriptFile(fileNode)) {
   // Process TypeScript/JavaScript file
   // ...
+}
+```
+
+### Executing Commands in Project Root
+
+The CommandExecutor service provides a secure way to execute shell commands in a project's root directory:
+
+```typescript
+// In the command execution endpoint handler
+router.post('/', async (req: Request, res: Response) => {
+  const { projectId } = req.params;
+  const { command, args } = req.body;
+  
+  try {
+    // Get project root path from Neo4j
+    const project = await neo4jService.getProjectById(projectId);
+    
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: `Project not found with ID: ${projectId}`,
+      });
+    }
+    
+    // Execute the command with security checks
+    const result = await commandExecutor.executeCommand({
+      command,        // Only allowed commands will execute
+      args: args || [],
+      cwd: project.rootPath,
+    });
+    
+    // Return the command result
+    return res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    // Handle execution errors
+    // ...
+  }
+});
+```
+
+The CommandExecutor service implements security by restricting commands to a predefined allowlist from an environment variable:
+
+```typescript
+// From the CommandExecutor service
+// Read from environment variable or use default value
+const ALLOWED_COMMANDS = (process.env.ALLOWED_COMMANDS || 'npm,npx,yarn,pnpm')
+  .split(',')
+  .map(cmd => cmd.trim())
+  .filter(cmd => cmd !== '');
+
+// Security check before execution
+if (!ALLOWED_COMMANDS.includes(command)) {
+  logger.warn(`Command execution blocked: ${command} is not in the allowed list`);
+  throw new Error(`Command '${command}' is not allowed. Allowed commands: ${ALLOWED_COMMANDS.join(', ')}`);
 }
 ```
 

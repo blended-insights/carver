@@ -58,18 +58,6 @@ src/
 
 ## Router Structure
 
-The API uses a cascading router pattern where each level of the route hierarchy is responsible for mounting its child routes:
-
-1. The main router (`/routes/index.ts`) mounts only top-level routes
-2. Each parent router mounts its child routers
-3. Dynamic route segments (e.g., `:processId`) use `mergeParams: true` to ensure parameters are passed down
-
-Example of the cascading structure:
-
-```typescript
-// routes/index.ts - Top level router
-router.use('/watchers', watchersRouter);
-
 // routes/watchers/index.ts - Watchers router
 router.use('/:processId', processIdRouter);
 
@@ -79,14 +67,6 @@ router.use('/restart', restartRouter);
 ```
 
 This approach makes the route organization more modular and maintainable.
-
-## File Processing Queue
-
-The API implements a reliable queue system for file operations to handle high request volumes and prevent race conditions:
-
-- **Redis First Storage**: Files are immediately stored in Redis before being added to the processing queue
-- **Bull Queue**: Background processing with automatic retries and failure handling
-- **Redis Locking**: Prevents race conditions with a simple, robust locking mechanism
 - **Sequential Processing**: Ensures jobs are processed one at a time
 - **Comprehensive Logging**: Detailed logging of job processing activities
 - **Verification Steps**: File operations include verification to ensure completeness
@@ -170,6 +150,19 @@ The API implements REST-compliant search functionality on the `/projects/:projec
     - Replace lines: `PATCH /projects/myproject/files/src/main.ts` with `{"startLine": 10, "endLine": 15, "content": "// new content", "operation": "replace"}`
     - Insert line: `PATCH /projects/myproject/files/src/main.ts` with `{"startLine": 10, "content": "// inserted line", "operation": "insert"}`
     - Delete lines: `PATCH /projects/myproject/files/src/main.ts` with `{"startLine": 10, "endLine": 15, "operation": "delete"}`
+- `POST /projects/:projectId/commands` - Execute a command in the project's root directory
+  - Request Body: JSON object with:
+    - `command`: The command to execute (must be in the allowed list)
+    - `args`: Array of arguments to pass to the command
+  - Environment Configuration:
+    - `ALLOWED_COMMANDS`: Comma-separated list of allowed commands (default: "npm,npx,yarn,pnpm")
+  - Response:
+    - 200 OK with stdout, stderr, and exitCode if command executed successfully
+    - 400 Bad Request if command is missing or args is not an array
+    - 403 Forbidden if the specified command is not in the allowed list
+    - 404 Not Found if the project does not exist
+    - 500 Internal Server Error for other execution errors
+  - Example: `POST /projects/myproject/commands` with `{"command": "npm", "args": ["run", "lint"]}`
 
 ### Watchers
 
