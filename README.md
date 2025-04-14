@@ -1,82 +1,162 @@
 # Carver
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+Carver is a comprehensive codebase assistant toolset that helps developers manage, monitor, and interact with their projects.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is almost ready ✨.
+## Project Components
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/nx-api/node?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+Carver consists of the following main components:
 
-## Finish your CI setup
+### API Server
 
-[Click here to finish setting up your workspace!](https://cloud.nx.app/connect/0NFyaAFK3N)
+The Carver API package provides a RESTful API for the Carver codebase assistant using Express.js.
 
+**Recent Updates:**
+- Enhanced file creation/update endpoint to store file data in Redis (April 12, 2025)
+- Fixed reliability issue in the file processing queue (April 11, 2025)
+- Fixed bug in directory tree query to correctly return recursive tree structure (April 10, 2025)
+- Enhanced file editing endpoint for better reliability (April 10, 2025)
+- Fixed bug where class methods were not being indexed as separate function nodes (April 08, 2025)
+- Fixed issue with the directory items query showing incorrect file types (April 08, 2025)
 
-## Run tasks
+[See API Documentation](apps/api/README.md)
 
-To run the dev server for your app, use:
+### MCP (Model Context Protocol) Server
 
-```sh
+The Carver MCP server provides file operations and project management capabilities over the Model Context Protocol.
+
+**Available Tools:**
+- File Operations (read, write, update, search)
+- Folder Operations (create, browse)
+- Git Operations (status, diff, commit, add, etc.)
+- Prompt Generators (bug reports, enhancement requests)
+
+[See MCP Documentation](apps/mcp/README.md)
+
+### Web Dashboard
+
+The Carver Dashboard is a user-friendly web interface for managing and monitoring file watcher processes.
+
+**Features:**
+- Real-time Updates: See file changes and watcher status in real-time
+- Interactive UI: Modern, developer-focused interface
+- Process Management: Start, stop, and restart watcher processes
+- Folder Browsing: Browse available folders and start new watcher processes
+- Status Monitoring: Monitor the status of all active watchers
+
+[See Web Dashboard Documentation](apps/web/README.md)
+
+## Getting Started
+
+### Prerequisites
+
+Before running the Carver services, make sure you have:
+
+1. Node.js 20.x or later
+2. Redis server running locally or accessible via network
+3. Neo4j database running locally or accessible via network
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-organization/carver.git
+   cd carver
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Set up environment variables:
+   - Create a `.env` file in the root directory with:
+     ```
+     REDIS_URL=redis://localhost:6379
+     NEO4J_URI=bolt://localhost:7687
+     NEO4J_USERNAME=neo4j
+     NEO4J_PASSWORD=password
+     ```
+
+### Development
+
+To run all services in development mode:
+
+```bash
+npm run dev
+```
+
+To run individual services:
+
+```bash
+# API Server
 npx nx serve api
+
+# MCP Server
+npm run mcp:dev
+
+# Web Dashboard
+npx nx run web:serve --configuration=development
 ```
 
-To create a production bundle:
+### Building
 
-```sh
+To build all projects:
+
+```bash
+npx nx run-many --target=build --all
+```
+
+To build a specific project:
+
+```bash
 npx nx build api
+npx nx build mcp
+npx nx build web
 ```
 
-To see all available targets to run for a project, run:
+## Project Structure
 
-```sh
-npx nx show project api
+Carver is organized as a monorepo with the following structure:
+
+```
+carver/
+├── apps/
+│   ├── api/                # RESTful API server
+│   ├── mcp/                # Model Context Protocol server
+│   └── web/                # Web dashboard
+├── libs/                   # Shared libraries
+├── package.json
+└── nx.json
 ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+## Development Guides
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+### Code Style Guidelines
 
-## Add new projects
+- TypeScript: Use strict typing, avoid `any`, use interfaces/types
+- Imports: Group imports (external, internal), alphabetize
+- Naming: camelCase for variables/functions, PascalCase for classes/interfaces/types
+- Errors: Use try/catch with proper error logging
+- Functions: Prefer pure functions, document with JSDoc
+- Commits: Follow conventional commits (`feat`, `fix`, `docs`, `refactor`, etc.)
+- Testing: Write unit tests for all functionality
+- Logging: Use the shared logger utility with appropriate levels
 
-While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
+### Commit Message Syntax
 
-Use the plugin's generator to create new projects.
-
-To generate a new application, use:
-
-```sh
-npx nx g @nx/node:app demo
+```
+<type>[optional scope]: <description>
+[optional body]
+[optional footer(s)]
 ```
 
-To generate a new library, use:
+- `feat`: A new feature
+- `fix`: A bug fix
+- `docs`: Documentation only changes
+- `style`: Changes that do not affect the meaning of the code
+- `refactor`: A code change that neither fixes a bug nor adds a feature
+- `perf`: A code change that improves performance
+- `test`: Adding missing tests or correcting existing tests
+- `chore`: Changes to the build process or auxiliary tools
 
-```sh
-npx nx g @nx/node:lib mylib
-```
-
-You can use `npx nx list` to get a list of installed plugins. Then, run `npx nx list <plugin-name>` to learn about more specific capabilities of a particular plugin. Alternatively, [install Nx Console](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) to browse plugins and generators in your IDE.
-
-[Learn more about Nx plugins &raquo;](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) | [Browse the plugin registry &raquo;](https://nx.dev/plugin-registry?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Install Nx Console
-
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
-
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Useful links
-
-Learn more:
-
-- [Learn more about this workspace setup](https://nx.dev/nx-api/node?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing apps with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+For more details, see [CLAUDE.md](CLAUDE.md)
