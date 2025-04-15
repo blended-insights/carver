@@ -4,6 +4,16 @@ This document outlines the service interfaces implemented in the Carver Watcher 
 
 ## Updates and Changes
 
+### April 14, 2025 - Git Service Enhancement for User Identity
+
+- Fixed bug where Git commit operations were failing due to missing user identity
+- Enhanced GitService to automatically configure user.name and user.email for all Git operations
+- Added environment variable support for customizing Git identity:
+  - `GIT_USER_EMAIL`: Email to use for Git operations (defaults to "carver@example.com")
+  - `GIT_USER_NAME`: Name to use for Git operations (defaults to "Carver System")
+- This change ensures all Git operations that require a user identity (such as commits) will work correctly
+- The configuration is applied at the Git instance level, providing consistent identity across all Git operations
+
 ### April 13, 2025 - Command Execution Service and Endpoint
 
 - Added new CommandExecutor service for secure command execution in project directories

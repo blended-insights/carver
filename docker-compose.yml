@@ -43,6 +43,8 @@ services:
       - neo4j
     environment:
       ALLOWED_COMMANDS: npm,npx
+      GIT_USER_EMAIL: jejrthompson@gmail.com
+      GIT_USER_NAME: Jamie Thompson
       HOST: 0.0.0.0
       NODE_ENV: production
       NEO4J_URI: bolt://neo4j:7687

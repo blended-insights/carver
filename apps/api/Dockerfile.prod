@@ -20,7 +20,10 @@ RUN npm run api:build
 FROM base AS runner
 
 RUN addgroup --system api 
-RUN adduser --system -G api api
+RUN adduser --system -G api -u 1010 api
+
+RUN apk add --no-cache git
+RUN git config --global core.fileMode false
 
 COPY --from=builder --chown=api:api /app/apps/api/package.json ./
 COPY --from=builder --chown=api:api /app/apps/api/dist ./

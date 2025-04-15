@@ -11,11 +11,20 @@ export class GitService {
    * @returns SimpleGit instance
    */
   private getGitInstance(projectPath: string): SimpleGit {
-    const options: Partial<SimpleGitOptions> = {
+    // Get user identity from environment variables or fallback to defaults
+    const userEmail = process.env.GIT_USER_EMAIL || 'carver@example.com';
+    const userName = process.env.GIT_USER_NAME || 'Carver System';
+    
+    const options: SimpleGitOptions = {
       baseDir: projectPath,
       binary: 'git',
       maxConcurrentProcesses: 6,
-      config: [],
+      config: [
+        'core.fileMode=false',
+        `user.email=${userEmail}`,
+        `user.name=${userName}`
+      ],
+      trimmed: true,
     };
 
     return simpleGit(options);
