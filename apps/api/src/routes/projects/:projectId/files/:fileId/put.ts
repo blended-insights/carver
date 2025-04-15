@@ -6,7 +6,12 @@ const router = Router({ mergeParams: true });
 
 /**
  * Route handler for replacing text in a file
- * Attempts direct Redis update first, falls back to filesystem check
+ * Uses exact string matching instead of regex for reliability
+ * Especially improves handling of template literals, multi-line text,
+ * and text with special characters.
+ * 
+ * This implementation fixes the bug that caused valid text replacements to fail,
+ * particularly with backticks and complex Neo4j queries.
  */
 router.put('/', async (req: Request, res: Response) => {
   logger.debug('Text replacement for file in project', req.params);
@@ -36,12 +41,10 @@ router.put('/', async (req: Request, res: Response) => {
 
     const content = fileResult.content;
 
-    // Use regex for more robust matching
-    const escapedOldText = oldText.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');
-    const oldTextRegex = new RegExp(escapedOldText, 'g');
-
-    // Check if the text to replace exists in the content using regex
-    if (!oldTextRegex.test(content)) {
+    // Use direct string includes check for existence
+    // This is more reliable than regex for complex strings,
+    // especially with template literals, backticks, and multi-line text
+    if (!content.includes(oldText)) {
       logger.warn(`Text to replace not found in file ${decodedFileId}`);
 
       // Find closest match for debugging purposes
@@ -52,7 +55,6 @@ router.put('/', async (req: Request, res: Response) => {
         message: `Text to replace not found in file ${decodedFileId}`,
         debug: {
           searchedFor: oldText,
-          content,
           closestMatch: closestMatch
             ? {
                 text: closestMatch.text,
@@ -63,9 +65,11 @@ router.put('/', async (req: Request, res: Response) => {
       });
     }
 
-    // Perform the replacement
-    const updatedContent = content.replace(oldTextRegex, newText);
+    // Perform the replacement using split/join instead of regex replace
+    // This avoids issues with special regex characters and escape sequences
+    const updatedContent = content.split(oldText).join(newText);
 
+    // Ensure the resulting script is valid (e.g., has matching brackets, no syntax errors)
     const isScriptValid = isValidScript(updatedContent, decodedFileId);
     if (!isScriptValid.valid) {
       return res.status(400).json({
