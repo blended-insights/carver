@@ -15,10 +15,11 @@ import {
 } from '@mantine/core';
 import { IconFolder, IconAlertCircle, IconCheck } from '@tabler/icons-react';
 import { Layout } from '@/lib/components/Layout';
-import { useFolders, startWatcher, useWatchers } from '../../lib/utils/api';
 import logger from '@/lib/utils/logger';
 import { usePersistedEvents } from '@/lib/store';
 import { useRouter } from 'next/navigation';
+import { useFolders } from '@/lib/hooks/use-folders';
+import { useWatchers } from '@/lib/hooks/use-watchers';
 
 export default function FoldersPage() {
   const router = useRouter();
@@ -36,6 +37,7 @@ export default function FoldersPage() {
 
   const {
     watchers,
+    startWatcher,
     isLoading: isWatchersLoading,
     error: watchersError,
     mutate: refreshWatchers,

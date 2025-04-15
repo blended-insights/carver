@@ -17,8 +17,8 @@ import {
 } from '@tabler/icons-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useWatchers } from '@/lib/utils/api';
 import { type ReactNode } from 'react';
+import { useWatchers } from '../hooks/use-watchers';
 
 interface LayoutProps {
   children: ReactNode;

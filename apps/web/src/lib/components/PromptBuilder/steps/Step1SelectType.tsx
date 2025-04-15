@@ -12,7 +12,8 @@ import {
 } from '@mantine/core';
 import { UseFormReturnType } from '@mantine/form';
 import { IconAlertCircle } from '@tabler/icons-react';
-import { useProjectFiles, ProjectFile } from '@/lib/utils/api';
+import { useProjectFiles } from '@/lib/hooks/use-project-files';
+import { ProjectFile } from '@/types/api';
 
 // Request types for prompt building
 export const REQUEST_TYPES = [

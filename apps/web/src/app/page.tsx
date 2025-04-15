@@ -22,10 +22,10 @@ import {
 } from '@tabler/icons-react';
 import { Layout } from '@/lib/components/Layout';
 import { WatcherCard } from '@/lib/components/WatcherCard';
-import { useWatchers } from '@/lib/utils/api';
 import { PersistedFileChanges } from '@/lib/components/PersistedFileChanges';
 import { PersistedWatcherStatus } from '@/lib/components/PersistedWatcherStatus';
 import { useIsConnected, useConnectionError } from '@/lib/store/redis-store';
+import { useWatchers } from '@/lib/hooks/use-watchers';
 
 export default function Dashboard() {
   // Use SWR with a specific configuration to minimize fetches

@@ -120,46 +120,6 @@ export function MyNewComponent({ title, content }: MyNewComponentProps) {
 }
 ```
 
-### Adding a New API Endpoint
-
-1. Create a new file in `src/app/api` for your endpoint
-2. Implement the necessary handler functions
-3. Update API utilities in `src/utils/api.ts`
-
-Example:
-
-```tsx
-// src/app/api/my-endpoint/route.ts
-import { NextRequest } from 'next/server';
-
-export async function GET(request: NextRequest) {
-  // Handle the request
-  const data = { message: 'Hello from my new endpoint' };
-  
-  // Return a response
-  return new Response(JSON.stringify(data), {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-}
-```
-
-Then add the API utility function:
-
-```typescript
-// src/utils/api.ts
-export const callMyNewEndpoint = async () => {
-  try {
-    const response = await apiClient.get('/my-endpoint');
-    return response.data;
-  } catch (error) {
-    logger.error('Error calling my new endpoint:', error);
-    throw error;
-  }
-};
-```
-
 ### Adding a New Redis Channel
 
 If you need to subscribe to a new Redis channel:

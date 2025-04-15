@@ -27,15 +27,11 @@ import { PersistedFileChanges } from '@/lib/components/PersistedFileChanges';
 import { PersistedWatcherStatus } from '@/lib/components/PersistedWatcherStatus';
 import { usePersistedEvents } from '@/lib/hooks/usePersistedEvents';
 import { useTransitionVisibility } from '@/lib/hooks/useTransitionVisibility';
-import {
-  killWatcher,
-  restartWatcher,
-  useWatcherByProcessId,
-} from '@/lib/utils/api';
 import { useParams, useRouter } from 'next/navigation';
 import { EventsManager } from '@/lib/components/EventsManager';
 import { ProcessPageSkeleton } from '@/lib/components/ProcessPageSkeleton';
 import { ErrorBoundary } from '@/lib/components/ErrorBoundary';
+import { useWatcherById } from '@/lib/hooks/use-watcher-by-id';
 
 // Process details UI component that consumes the fetched watcher data
 function ProcessDetails({ processId }: { processId: string }) {
@@ -44,9 +40,12 @@ function ProcessDetails({ processId }: { processId: string }) {
   const { isVisible } = useTransitionVisibility({ delay: 150 });
 
   // Get watcher data from API - this will now use Suspense
-  const { watcher, mutate } = useWatcherByProcessId(processId, {
-    suspense: true,
-  });
+  const { watcher, killWatcher, restartWatcher, mutate } = useWatcherById(
+    processId,
+    {
+      suspense: true,
+    }
+  );
 
   // Create a memoized config object for usePersistedEvents
   const eventsConfig = useMemo(
@@ -75,7 +74,7 @@ function ProcessDetails({ processId }: { processId: string }) {
       setIsActionLoading(true);
 
       // The killWatcher function will automatically invalidate the SWR cache
-      await killWatcher(processId);
+      await killWatcher();
 
       // Refresh the watcher data
       mutate();
@@ -87,7 +86,7 @@ function ProcessDetails({ processId }: { processId: string }) {
     } finally {
       setIsActionLoading(false);
     }
-  }, [processId, mutate, router]);
+  }, [killWatcher, mutate, router]);
 
   // Restart watcher - wrapped in useCallback to maintain stable reference
   const handleRestartWatcher = useCallback(async () => {
@@ -95,7 +94,7 @@ function ProcessDetails({ processId }: { processId: string }) {
       setIsActionLoading(true);
 
       // The restartWatcher function will automatically invalidate the SWR cache
-      await restartWatcher(processId);
+      await restartWatcher();
 
       // Refresh the watcher data
       mutate();
@@ -104,7 +103,7 @@ function ProcessDetails({ processId }: { processId: string }) {
     } finally {
       setIsActionLoading(false);
     }
-  }, [processId, mutate]);
+  }, [restartWatcher, mutate]);
 
   // If watcher is null, show the "not found" UI
   if (!watcher) {

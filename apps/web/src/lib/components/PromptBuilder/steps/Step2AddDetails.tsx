@@ -22,8 +22,8 @@ import {
   IconPlus,
 } from '@tabler/icons-react';
 import { UseFormReturnType } from '@mantine/form';
-import { useProjectFiles } from '@/lib/utils/api';
 import { FormValues } from '../promptBuilder';
+import { useProjectFiles } from '@/lib/hooks/use-project-files';
 
 interface Step2AddDetailsProps {
   form: UseFormReturnType<FormValues>;

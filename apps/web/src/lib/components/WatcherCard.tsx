@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { Card, Group, Badge, Text, Button, ActionIcon, Stack, Title } from '@mantine/core';
 import { IconFolder, IconRefresh, IconX, IconEye } from '@tabler/icons-react';
 import Link from 'next/link';
-import { killWatcher, restartWatcher } from '../utils/api';
 import logger from '../utils/logger';
+import { useWatcherById } from '../hooks/use-watcher-by-id';
 
 interface WatcherCardProps {
   processId: string;
@@ -15,6 +15,10 @@ interface WatcherCardProps {
 export function WatcherCard({ processId, folderPath, status = 'running', onAction }: WatcherCardProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [currentStatus, setCurrentStatus] = useState(status);
+
+  const { killWatcher, restartWatcher } = useWatcherById(
+    processId,
+  );
   
   // Update local status when prop changes
   useEffect(() => {
@@ -42,7 +46,7 @@ export function WatcherCard({ processId, folderPath, status = 'running', onActio
   const handleKill = async () => {
     try {
       setIsLoading(true);
-      await killWatcher(processId);
+      await killWatcher();
       setCurrentStatus('shutdown');
       if (onAction) onAction();
     } catch (error) {
@@ -55,7 +59,7 @@ export function WatcherCard({ processId, folderPath, status = 'running', onActio
   const handleRestart = async () => {
     try {
       setIsLoading(true);
-      await restartWatcher(processId);
+      await restartWatcher();
       setCurrentStatus('running');
       if (onAction) onAction();
     } catch (error) {
