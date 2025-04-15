@@ -151,18 +151,29 @@ export const DIRECTORY_QUERIES = {
     MERGE (parent)-[:CONTAINS]->(child)
   `,
   GET_DIRECTORIES_BY_PROJECT: `
-    MATCH (p:Project {name: $projectName})-[:CONTAINS*1..]->(d:Directory)
+    // Match the project and its directories
+    MATCH (p:Project {name: $projectName})
+    MATCH path = (p)-[:CONTAINS*1..]->(d:Directory)
+    WHERE length(path) > 0
     RETURN DISTINCT d.path AS path, d.name AS name
     ORDER BY d.path
   `,
   SEARCH_DIRECTORIES_BY_PROJECT: `
-    MATCH (p:Project {name: $projectName})-[:CONTAINS*1..]->(d:Directory)
-    WHERE toLower(d.path) CONTAINS toLower($searchTerm) OR toLower(d.name) CONTAINS toLower($searchTerm)
+    // Match the project and search for directories
+    MATCH (p:Project {name: $projectName})
+    MATCH path = (p)-[:CONTAINS*1..]->(d:Directory)
+    WHERE length(path) > 0
+      AND (toLower(d.path) CONTAINS toLower($searchTerm) OR toLower(d.name) CONTAINS toLower($searchTerm))
     RETURN DISTINCT d.path AS path, d.name AS name
     ORDER BY d.path
   `,
   GET_DIRECTORY_BY_PATH: `
-    MATCH (p:Project {name: $projectName})-[:CONTAINS*1..]->(d:Directory {path: $dirPath})
+    // Match the project and the specific directory
+    MATCH (p:Project {name: $projectName})
+    MATCH (d:Directory {path: $dirPath})
+    // Make sure the directory is within the project's hierarchy
+    MATCH path = shortestPath((p)-[:CONTAINS*]->(d))
+    WHERE length(path) > 0
     RETURN d.path AS path, d.name AS name
   `,
   GET_FILES_BY_DIRECTORY: `

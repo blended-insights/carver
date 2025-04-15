@@ -4,6 +4,10 @@ The Carver API package provides a RESTful API for the Carver codebase assistant 
 
 ## Recent Updates
 
+- **April 14, 2025**: Fixed bug where Git commit operations were failing due to missing user identity. The Git service now automatically configures user.name and user.email from environment variables (GIT_USER_NAME, GIT_USER_EMAIL) or uses default values.
+- **April 14, 2025**: Fixed bug in the folders endpoint where it was returning all folders across the graph instead of only those for the specified project. Updated Neo4j queries to properly filter directories by project path relationships.
+- **April 14, 2025**: Fixed critical bug in the file text replacement endpoint (`PUT /projects/:projectId/files/:fileId`) that was causing valid replacements to fail, especially with template literals and complex multi-line text. Replaced regex-based matching with exact string matching for improved reliability. See `apps/api/docs/FILE_EDIT_FIX.md` for details.
+- **April 13, 2025**: Added command tools to MCP: carver-commands-list and carver-commands-execute. Enhanced API with corresponding endpoints to allow command execution within project directories.
 - **April 12, 2025**: Enhanced file creation/update endpoint to store file data in Redis before queueing. This improves reliability by ensuring file data is persisted even if the queue processing is delayed or fails.
 - **April 11, 2025**: Fixed reliability issue in the file processing queue where jobs would occasionally not be executed. Implemented a robust Redis-based locking mechanism and sequential job processing to ensure 100% job execution.
 - **April 10, 2025**: Fixed bug in GET_DIRECTORY_TREE_BY_PATH query to correctly return a recursive directory tree with all children and their descendants. The query now uses a similar approach to GET_ITEMS_BY_DIRECTORY but retrieves the entire subtree.

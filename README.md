@@ -10,9 +10,12 @@ Carver consists of the following main components:
 
 **Recent Updates:**
 
+- Fixed bug where Git commit operations were failing due to missing user identity (April 14, 2025)
+- Fixed bug where folders endpoint returned all folders across the graph instead of only those for the specified project (April 14, 2025)
+- Fixed critical bug in file text replacement that failed with template literals (April 14, 2025)
 - Added command tools to MCP: carver-commands-list and carver-commands-execute (April 13, 2025)
 - Fixed issue with the directory items query showing incorrect file types (April 08, 2025)
-- Added GET endpoint to expose allowed commands configuration (April 13, 2025)
+- Added GET endpoint to expose allowed commands configuration (April 13, 2025) 
 - Added command execution endpoint to run npm/npx commands on project root (April 13, 2025)
 - Enhanced file creation/update endpoint to store file data in Redis (April 12, 2025)
 - Fixed reliability issue in the file processing queue (April 11, 2025)
