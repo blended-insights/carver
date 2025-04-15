@@ -19,7 +19,6 @@ export class AdminOperations {
         await session.run(CONSTRAINTS_AND_INDEXES.FILE_PATH_CONSTRAINT);
         await session.run(CONSTRAINTS_AND_INDEXES.DIRECTORY_PATH_CONSTRAINT);
         await session.run(CONSTRAINTS_AND_INDEXES.PROJECT_NAME_CONSTRAINT);
-        await session.run(CONSTRAINTS_AND_INDEXES.VERSION_NAME_CONSTRAINT);
         await session.run(CONSTRAINTS_AND_INDEXES.FUNCTION_INDEX);
         await session.run(CONSTRAINTS_AND_INDEXES.CLASS_INDEX);
 

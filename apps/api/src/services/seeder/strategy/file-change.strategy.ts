@@ -18,12 +18,10 @@ export class FileChangeSeedingStrategy implements SeedingStrategy {
   async execute(options: {
     rootPath: string;
     projectName: string;
-    versionName: string;
     filePath: string;
     changeType: 'add' | 'change' | 'unlink';
   }): Promise<{ success: boolean; message: string }> {
-    const { rootPath, projectName, versionName, filePath, changeType } =
-      options;
+    const { rootPath, projectName, filePath, changeType } = options;
 
     logger.info(`Processing ${changeType} event for file: ${filePath}`);
 
@@ -32,15 +30,15 @@ export class FileChangeSeedingStrategy implements SeedingStrategy {
         // Handle file deletion
         logger.info(`Marking file as deleted: ${filePath}`);
 
-        // Mark file as deleted in current version
-        await neo4jService.markFileAsDeleted(filePath, versionName);
+        // Mark file as deleted in Neo4j
+        await neo4jService.markFileAsDeleted(filePath);
 
         // Remove from Redis
         await redisService.deleteFileData(projectName, filePath);
 
         return {
           success: true,
-          message: `Successfully marked file ${filePath} as deleted in version ${versionName}`,
+          message: `Successfully marked file ${filePath} as deleted`,
         };
       } else {
         // Handle file addition or modification
@@ -100,7 +98,6 @@ export class FileChangeSeedingStrategy implements SeedingStrategy {
         // Use the processor factory to process the file
         const processingResult = await processorFactory.processFile(fileNode, {
           projectName,
-          versionName,
           changeType,
         });
 
@@ -113,7 +110,7 @@ export class FileChangeSeedingStrategy implements SeedingStrategy {
 
         return {
           success: true,
-          message: `Successfully processed file ${filePath} in version ${versionName} using processors: ${processingResult.processedBy.join(
+          message: `Successfully processed file ${filePath} using processors: ${processingResult.processedBy.join(
             ', '
           )}`,
         };

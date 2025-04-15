@@ -11,7 +11,6 @@ export interface SeedingStrategy {
   execute(options: {
     rootPath: string;
     projectName: string;
-    versionName: string;
     filePath?: string;
     changeType?: 'add' | 'change' | 'unlink';
   }): Promise<{ success: boolean; message: string }>;

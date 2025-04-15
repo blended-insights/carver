@@ -17,9 +17,8 @@ export class FullScanSeedingStrategy implements SeedingStrategy {
   async execute(options: {
     rootPath: string;
     projectName: string;
-    versionName: string;
   }): Promise<{ success: boolean; message: string }> {
-    const { rootPath, projectName, versionName } = options;
+    const { rootPath, projectName } = options;
 
     try {
       // Process the file structure (directories and files)
@@ -50,8 +49,8 @@ export class FullScanSeedingStrategy implements SeedingStrategy {
         );
         logger.info(`Marking file as deleted: ${filePath}`);
 
-        // Mark file as deleted in current version
-        await neo4jService.markFileAsDeleted(filePath, versionName);
+        // Mark file as deleted in Neo4j
+        await neo4jService.markFileAsDeleted(filePath);
 
         // Remove from Redis
         await redisService.deleteFileData(projectName, filePath);
@@ -104,18 +103,12 @@ export class FullScanSeedingStrategy implements SeedingStrategy {
       let processed = 0;
       let failed = 0;
 
-      // Create file version relationships for unchanged files
-      for (const filePath of unchangedFiles) {
-        await neo4jService.createFileVersionRelationship(filePath, versionName);
-      }
-
       // Process each file with the processor factory
       for (const file of filteredFiles) {
         try {
           // Use the processor factory to process the file
           const processingResult = await processorFactory.processFile(file, {
             projectName,
-            versionName,
             changeType: 'change', // Treat all files as changed for processing purposes
           });
 
@@ -137,7 +130,7 @@ export class FullScanSeedingStrategy implements SeedingStrategy {
       }
 
       logger.info(
-        `Successfully seeded the graph database for project: ${projectName} with version: ${versionName}`
+        `Successfully seeded the graph database for project: ${projectName}`
       );
       logger.info(
         `Processed: ${processed}, Failed: ${failed}, Unchanged: ${unchangedFiles.length}`
@@ -145,7 +138,7 @@ export class FullScanSeedingStrategy implements SeedingStrategy {
 
       return {
         success: true,
-        message: `Successfully seeded the graph database for project: ${projectName} with version: ${versionName}. Processed ${filesFromDisk.length} files (${newOrChangedFiles.length} changed, ${processed} successfully processed, ${failed} failed)`,
+        message: `Successfully seeded the graph database for project: ${projectName}. Processed ${filesFromDisk.length} files (${newOrChangedFiles.length} changed, ${processed} successfully processed, ${failed} failed)`,
       };
     } catch (error) {
       logger.error(`Error in full scan seeding:`, error);

@@ -19,51 +19,15 @@ import logger from '@/utils/logger';
  */
 export class EntityOperations {
   /**
-   * Link a code entity to the current version
-   * @param entityType Type of entity (Function, Class, Variable)
-   * @param name Entity name
-   * @param filePath File path
-   * @param versionName Version name
-   */
-  async linkEntityToVersion(
-    entityType: 'Function' | 'Class' | 'Variable',
-    name: string,
-    filePath: string,
-    versionName: string
-  ): Promise<void> {
-    const client = getNeo4jClient();
-    return client.executeInSession(async (session) => {
-      try {
-        // Replace the template placeholder with the actual entity type
-        const query = ENTITY_QUERIES.LINK_ENTITY_TO_VERSION.replace(
-          '$ENTITY_TYPE',
-          entityType
-        );
-
-        await session.run(query, {
-          name,
-          filePath,
-          versionName,
-        });
-      } catch (error) {
-        logger.error(`Error linking ${entityType} ${name} to version:`, error);
-        throw error;
-      }
-    });
-  }
-
-  /**
    * Handle entities that were deleted from a file
    * @param filePath File path
    * @param currentFunctions Current functions in the file
    * @param currentClasses Current classes in the file
-   * @param versionName Version name
    */
   async handleDeletedEntities(
     filePath: string,
     currentFunctions: FunctionNode[],
-    currentClasses: ClassNode[],
-    versionName: string
+    currentClasses: ClassNode[]
   ): Promise<void> {
     const client = getNeo4jClient();
     return client.executeInSession(async (session) => {
@@ -102,7 +66,6 @@ export class EntityOperations {
           await session.run(ENTITY_DELETION_QUERIES.MARK_FUNCTION_DELETED, {
             filePath,
             funcName,
-            versionName,
           });
         }
 
@@ -127,7 +90,6 @@ export class EntityOperations {
           await session.run(ENTITY_DELETION_QUERIES.MARK_CLASS_DELETED, {
             filePath,
             className,
-            versionName,
           });
         }
       } catch (error) {
@@ -142,13 +104,11 @@ export class EntityOperations {
    * @param filePath File path
    * @param functions Functions in the file
    * @param classes Classes in the file
-   * @param versionName Version name
    */
   async processEntityMovements(
     filePath: string,
     functions: FunctionNode[],
-    classes: ClassNode[],
-    versionName: string
+    classes: ClassNode[]
   ): Promise<void> {
     const client = getNeo4jClient();
     return client.executeInSession(async (session) => {
@@ -177,7 +137,6 @@ export class EntityOperations {
             await session.run(ENTITY_MOVEMENT_QUERIES.MARK_FUNCTION_MOVED, {
               funcId: funcNode.identity,
               newPath: filePath,
-              versionName,
             });
           }
         }
@@ -205,7 +164,6 @@ export class EntityOperations {
             await session.run(ENTITY_MOVEMENT_QUERIES.MARK_CLASS_MOVED, {
               clsId: clsNode.identity,
               newPath: filePath,
-              versionName,
             });
           }
         }

@@ -16,8 +16,6 @@ export const CONSTRAINTS_AND_INDEXES = {
     'CREATE CONSTRAINT directory_path IF NOT EXISTS FOR (d:Directory) REQUIRE d.path IS UNIQUE',
   PROJECT_NAME_CONSTRAINT:
     'CREATE CONSTRAINT project_name IF NOT EXISTS FOR (p:Project) REQUIRE p.name IS UNIQUE',
-  VERSION_NAME_CONSTRAINT:
-    'CREATE CONSTRAINT version_name IF NOT EXISTS FOR (v:Version) REQUIRE v.name IS UNIQUE',
   FUNCTION_INDEX:
     'CREATE INDEX function_index IF NOT EXISTS FOR (f:Function) ON (f.name, f.filePath)',
   CLASS_INDEX:
@@ -32,54 +30,27 @@ export const PROJECT_QUERIES = {
     ON MATCH SET p.rootPath = $rootPath, p.updatedAt = datetime()
     RETURN p
   `,
-  CREATE_VERSION: `
-    MERGE (v:Version {name: $versionName})
-    ON CREATE SET v.timestamp = datetime()
-    WITH v
-    MATCH (p:Project {name: $projectName})
-    MERGE (p)-[:HAS_VERSION]->(v)
-  `,
-  GET_LATEST_VERSION: `
-    MATCH (p:Project {name: $projectName})-[:HAS_VERSION]->(v:Version)
-    RETURN v.name AS versionName
-    ORDER BY v.timestamp DESC
-    LIMIT 1
-  `,
   GET_PROJECT_BY_NAME: `
     MATCH (p:Project {name: $projectName})
     OPTIONAL MATCH (p)-[:CONTAINS*1..]->(f:File)
     WITH p, count(distinct f) as fileCount
-    OPTIONAL MATCH (p)-[:HAS_VERSION]->(v:Version)
-    WITH p, fileCount, v
-    ORDER BY v.timestamp DESC
-    WITH p, fileCount, collect(v)[0] as latestVersion
     RETURN 
       p.name as id, 
       p.name as name, 
       p.rootPath as path, 
       fileCount,
-      CASE WHEN latestVersion IS NULL 
-        THEN NULL 
-        ELSE toString(latestVersion.timestamp) 
-      END as lastUpdated
+      p.updatedAt as lastUpdated
   `,
   GET_ALL_PROJECTS: `
     MATCH (p:Project)
     OPTIONAL MATCH (p)-[:CONTAINS*1..]->(f:File)
     WITH p, count(distinct f) as fileCount
-    OPTIONAL MATCH (p)-[:HAS_VERSION]->(v:Version)
-    WITH p, fileCount, v
-    ORDER BY v.timestamp DESC
-    WITH p, fileCount, collect(v)[0] as latestVersion
     RETURN 
       p.name as id, 
       p.name as name, 
       p.rootPath as path, 
       fileCount,
-      CASE WHEN latestVersion IS NULL 
-        THEN NULL 
-        ELSE toString(latestVersion.timestamp) 
-      END as lastUpdated
+      p.updatedAt as lastUpdated
     ORDER BY fileCount DESC
   `,
 };
@@ -88,13 +59,7 @@ export const PROJECT_QUERIES = {
 export const FILE_QUERIES = {
   MARK_FILE_AS_DELETED: `
     MATCH (f:File {path: $filePath})
-    MATCH (v:Version {name: $versionName})
-    MERGE (f)-[:DELETED_IN]->(v)
-  `,
-  CREATE_FILE_VERSION_RELATIONSHIP: `
-    MATCH (f:File {path: $filePath})
-    MATCH (v:Version {name: $versionName})
-    MERGE (f)-[:APPEARED_IN]->(v)
+    DETACH DELETE f
   `,
   CREATE_FILE_NODE: `
     MERGE (f:File {path: $path})
@@ -266,11 +231,6 @@ export const DIRECTORY_QUERIES = {
 
 // Entity Operations
 export const ENTITY_QUERIES = {
-  LINK_ENTITY_TO_VERSION: `
-    MATCH (entity:$ENTITY_TYPE {name: $name, filePath: $filePath})
-    MATCH (v:Version {name: $versionName})
-    MERGE (entity)-[:APPEARED_IN]->(v)
-  `,
   CREATE_FUNCTION_NODE: `
     MATCH (f:File {path: $filePath})
     MERGE (func:Function {name: $name, filePath: $filePath})
@@ -336,23 +296,19 @@ export const ENTITY_QUERIES = {
 export const ENTITY_DELETION_QUERIES = {
   GET_PREVIOUS_FUNCTIONS: `
     MATCH (f:File {path: $filePath})-[:DEFINES]->(func:Function)
-    WHERE NOT EXISTS { MATCH (func)-[:DELETED_IN]->() }
     RETURN func.name as name
   `,
   MARK_FUNCTION_DELETED: `
     MATCH (f:File {path: $filePath})-[:DEFINES]->(func:Function {name: $funcName})
-    MATCH (v:Version {name: $versionName})
-    MERGE (func)-[:DELETED_IN]->(v)
+    DETACH DELETE func
   `,
   GET_PREVIOUS_CLASSES: `
     MATCH (f:File {path: $filePath})-[:DEFINES]->(cls:Class)
-    WHERE NOT EXISTS { MATCH (cls)-[:DELETED_IN]->() }
     RETURN cls.name as name
   `,
   MARK_CLASS_DELETED: `
     MATCH (f:File {path: $filePath})-[:DEFINES]->(cls:Class {name: $className})
-    MATCH (v:Version {name: $versionName})
-    MERGE (cls)-[:DELETED_IN]->(v)
+    DETACH DELETE cls
   `,
   CHECK_FILE_EXISTS: 'MATCH (f:File {path: $filePath}) RETURN f',
 };
@@ -360,39 +316,26 @@ export const ENTITY_DELETION_QUERIES = {
 // Entity Movement
 export const ENTITY_MOVEMENT_QUERIES = {
   FIND_MOVED_FUNCTION: `
-    MATCH (oldFile:File)-[:DEFINES]->(func:Function {name: $funcName})
-    MATCH (func)-[:DELETED_IN]->(v:Version)
-    WHERE oldFile.path <> $filePath
-    AND func.parameters = $parameters
-    AND v.timestamp > datetime() - duration('P30D') // Within last 30 days
-    RETURN oldFile.path as oldPath, func, v.timestamp as deletedAt
-    ORDER BY deletedAt DESC
+    MATCH (f:File {path: $filePath})-[:DEFINES]->(func:Function {name: $funcName})
+    WHERE func.parameters = $parameters AND f.path <> $filePath
+    RETURN f.path as oldPath, func
     LIMIT 1
   `,
   MARK_FUNCTION_MOVED: `
     MATCH (func:Function) WHERE id(func) = $funcId
     MATCH (newFile:File {path: $newPath})
-    MATCH (v:Version {name: $versionName})
-    MERGE (func)-[:MOVED_TO {in: $versionName}]->(newFile)
-    MERGE (func)-[:APPEARED_IN]->(v)
-    REMOVE (func)-[:DELETED_IN]->(v)
+    MERGE (func)-[:MOVED_TO]->(newFile)
   `,
   FIND_MOVED_CLASS: `
-    MATCH (oldFile:File)-[:DEFINES]->(cls:Class {name: $className})
-    MATCH (cls)-[:DELETED_IN]->(v:Version)
-    WHERE oldFile.path <> $filePath
-    AND v.timestamp > datetime() - duration('P30D') // Within last 30 days
-    RETURN oldFile.path as oldPath, cls, v.timestamp as deletedAt
-    ORDER BY deletedAt DESC
+    MATCH (f:File {path: $filePath})-[:DEFINES]->(cls:Class {name: $className})
+    WHERE f.path <> $filePath
+    RETURN f.path as oldPath, cls
     LIMIT 1
   `,
   MARK_CLASS_MOVED: `
     MATCH (cls:Class) WHERE id(cls) = $clsId
     MATCH (newFile:File {path: $newPath})
-    MATCH (v:Version {name: $versionName})
-    MERGE (cls)-[:MOVED_TO {in: $versionName}]->(newFile)
-    MERGE (cls)-[:APPEARED_IN]->(v)
-    REMOVE (cls)-[:DELETED_IN]->(v)
+    MERGE (cls)-[:MOVED_TO]->(newFile)
   `,
 };
 

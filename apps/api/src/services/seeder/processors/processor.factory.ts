@@ -48,7 +48,6 @@ export class ProcessorFactory {
     file: FileNode,
     options: {
       projectName: string;
-      versionName: string;
       changeType?: 'add' | 'change' | 'unlink';
     }
   ): Promise<{
@@ -114,7 +113,7 @@ export class ProcessorFactory {
     const success = failedProcessors.length === 0;
 
     // Compile message
-    let message = success
+    const message = success
       ? `File ${file.path} successfully processed by all processors`
       : `File ${file.path} partially processed, failed processors: ${failedProcessors.join(', ')}`;
 

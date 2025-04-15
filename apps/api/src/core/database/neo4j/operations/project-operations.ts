@@ -33,54 +33,6 @@ export class ProjectOperations {
   }
 
   /**
-   * Create a new version node
-   * @param versionName Version name
-   * @param projectName Project name
-   */
-  async createVersion(versionName: string, projectName: string): Promise<void> {
-    const client = getNeo4jClient();
-    return client.executeInSession(async (session) => {
-      try {
-        await session.run(PROJECT_QUERIES.CREATE_VERSION, {
-          versionName,
-          projectName,
-        });
-      } catch (error) {
-        logger.error(`Error creating version ${versionName}:`, error);
-        throw error;
-      }
-    });
-  }
-
-  /**
-   * Get the latest version name for a project
-   * @param projectName Project name
-   * @returns Latest version name or null if no version exists
-   */
-  async getLatestVersionName(projectName: string): Promise<string | null> {
-    const client = getNeo4jClient();
-    return client.executeInSession(async (session) => {
-      try {
-        const result = await session.run(PROJECT_QUERIES.GET_LATEST_VERSION, {
-          projectName,
-        });
-
-        if (result.records.length > 0) {
-          return result.records[0].get('versionName');
-        }
-
-        return null;
-      } catch (error) {
-        logger.error(
-          `Error getting latest version for project ${projectName}:`,
-          error
-        );
-        throw error;
-      }
-    });
-  }
-
-  /**
    * Get a project by name with metadata
    * @param projectName Project name to find
    * @returns Project object with id, name, path, fileCount, and lastUpdated or null if not found

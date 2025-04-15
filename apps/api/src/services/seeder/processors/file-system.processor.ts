@@ -28,14 +28,13 @@ export class FileSystemProcessor implements FileProcessor {
     file: FileNode,
     options: {
       projectName: string;
-      versionName: string;
       changeType?: 'add' | 'change' | 'unlink';
     }
   ): Promise<{
     success: boolean;
     message: string;
   }> {
-    const { projectName, versionName, changeType } = options;
+    const { projectName, changeType } = options;
 
     try {
       // Skip processing for deleted files
@@ -62,12 +61,6 @@ export class FileSystemProcessor implements FileProcessor {
         fileExtension,
         dirPath,
         projectName
-      );
-
-      // Create relationship to the current version
-      await neo4jService.createFileVersionRelationship(
-        file.path,
-        versionName
       );
 
       logger.debug(`Processed file system structure for: ${file.path}`);

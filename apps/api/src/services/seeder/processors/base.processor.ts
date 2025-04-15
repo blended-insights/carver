@@ -22,7 +22,6 @@ export interface FileProcessor {
     file: FileNode,
     options: {
       projectName: string;
-      versionName: string;
       changeType?: 'add' | 'change' | 'unlink';
     }
   ): Promise<{

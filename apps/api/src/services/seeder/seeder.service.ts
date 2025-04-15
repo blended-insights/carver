@@ -1,6 +1,6 @@
 import path from 'path';
 import logger from '@/utils/logger';
-import { neo4jService, gitVersionManagerFactory } from '@/services';
+import { neo4jService } from '@/services';
 import { fileSystemService } from '@/services';
 import { SeedingStrategy, FullScanSeedingStrategy, FileChangeSeedingStrategy } from './strategy';
 
@@ -43,25 +43,6 @@ export class SeederService {
     const rootPath = path.resolve(root);
     const projectName = project;
 
-    // Get or create a GitVersionManager instance for this repository
-    const versionManager = gitVersionManagerFactory.getManager(
-      rootPath,
-      async (newVersion) => {
-        // This callback will be called when git operations change the version
-        logger.info(
-          `Git version changed to ${newVersion} for project ${projectName}`
-        );
-        // We don't need to handle the callback here as file watchers will detect changes
-      }
-    );
-
-    // Start watching for git changes if not already watching
-    await versionManager.startWatching();
-
-    // Get the current git-based version
-    const gitVersion = await versionManager.getCurrentVersion();
-    const versionName = `git_${gitVersion}`;
-
     // Validate that the directory exists
     if (!fileSystemService.directoryExists(rootPath)) {
       return {
@@ -77,16 +58,12 @@ export class SeederService {
       // Create or get Project node
       await neo4jService.createOrGetProject(projectName, rootPath);
 
-      // Create new Version node
-      await neo4jService.createVersion(versionName, projectName);
-
       // Choose the appropriate strategy based on the parameters
       if (filePath && changeType) {
         // Use the file change strategy for single file changes
         return await this.fileChangeStrategy.execute({
           rootPath,
           projectName,
-          versionName,
           filePath,
           changeType,
         });
@@ -95,7 +72,6 @@ export class SeederService {
         return await this.fullScanStrategy.execute({
           rootPath,
           projectName,
-          versionName,
         });
       }
     } catch (error) {

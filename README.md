@@ -10,6 +10,8 @@ Carver consists of the following main components:
 
 **Recent Updates:**
 
+- Removed versioning from Neo4j graph database for simpler structure (April 14, 2025)
+- Made `path` property on File node unique to ensure data consistency (April 14, 2025)
 - Fixed bug where Git commit operations were failing due to missing user identity (April 14, 2025)
 - Fixed bug where folders endpoint returned all folders across the graph instead of only those for the specified project (April 14, 2025)
 - Fixed critical bug in file text replacement that failed with template literals (April 14, 2025)

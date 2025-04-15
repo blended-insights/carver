@@ -106,15 +106,6 @@ export class DirectoryProcessor {
       dirRelativePath,
       projectName
     );
-
-    // Get the latest version and create a relationship if it exists
-    const versionName = await neo4jService.getLatestVersionName(projectName);
-    if (versionName) {
-      await neo4jService.createFileVersionRelationship(
-        fileRelativePath,
-        versionName
-      );
-    }
   }
 
   /**
@@ -152,38 +143,12 @@ export class DirectoryProcessor {
   }
 
   /**
-   * Creates a new version for a project and returns the version name
-   * @param projectName Project name
-   * @returns New version name
-   */
-  async createNewVersion(projectName: string): Promise<string> {
-    // Create timestamp-based version name
-    const versionName = `v_${Date.now()}`;
-
-    // Create version using neo4jService
-    await neo4jService.createVersion(versionName, projectName);
-
-    return versionName;
-  }
-
-  /**
-   * Marks a file as deleted in the current version
+   * Marks a file as deleted in the database
    * @param filePath File path
-   * @param projectName Project name
    */
   async markFileAsDeleted(
-    filePath: string,
-    projectName: string
+    filePath: string
   ): Promise<void> {
-    // Get the latest version
-    const versionName = await neo4jService.getLatestVersionName(projectName);
-
-    if (versionName) {
-      await neo4jService.markFileAsDeleted(filePath, versionName);
-    } else {
-      logger.warn(
-        `No version found for project ${projectName} when marking file ${filePath} as deleted`
-      );
-    }
+    await neo4jService.markFileAsDeleted(filePath);
   }
 }

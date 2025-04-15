@@ -36,7 +36,6 @@ export class TypeScriptProcessor implements FileProcessor {
     file: FileNode,
     options: {
       projectName: string;
-      versionName: string;
       changeType?: 'add' | 'change' | 'unlink';
     }
   ): Promise<{
@@ -51,8 +50,6 @@ export class TypeScriptProcessor implements FileProcessor {
       functionCalls: number;
     };
   }> {
-    const { versionName } = options;
-
     try {
       // Initialize ts-morph project with just this file
       const project = TsMorphProjectManager.createProject([file]);
@@ -76,50 +73,27 @@ export class TypeScriptProcessor implements FileProcessor {
       await neo4jService.handleDeletedEntities(
         file.path,
         functions,
-        classes,
-        versionName
+        classes
       );
 
       // Process entity movements (if they come from other files)
       await neo4jService.processEntityMovements(
         file.path,
         functions,
-        classes,
-        versionName
+        classes
       );
-
-      // Create file's relationship to current version
-      await neo4jService.createFileVersionRelationship(file.path, versionName);
 
       // Create entities in Neo4j
       for (const func of functions) {
         await neo4jService.createFunctionNode(func);
-        await neo4jService.linkEntityToVersion(
-          'Function',
-          func.name,
-          func.filePath,
-          versionName
-        );
       }
 
       for (const cls of classes) {
         await neo4jService.createClassNode(cls);
-        await neo4jService.linkEntityToVersion(
-          'Class',
-          cls.name,
-          cls.filePath,
-          versionName
-        );
       }
 
       for (const variable of variables) {
         await neo4jService.createVariableNode(variable);
-        await neo4jService.linkEntityToVersion(
-          'Variable',
-          variable.name,
-          variable.filePath,
-          versionName
-        );
       }
 
       for (const importNode of imports) {

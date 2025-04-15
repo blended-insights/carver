@@ -52,29 +52,16 @@ export interface INeo4jService {
   close(): Promise<void>;
   createConstraintsAndIndexes(): Promise<void>;
   createOrGetProject(projectName: string, rootPath: string): Promise<void>;
-  createVersion(versionName: string, projectName: string): Promise<void>;
-  markFileAsDeleted(filePath: string, versionName: string): Promise<void>;
-  createFileVersionRelationship(
-    filePath: string,
-    versionName: string
-  ): Promise<void>;
-  linkEntityToVersion(
-    entityType: 'Function' | 'Class' | 'Variable',
-    name: string,
-    filePath: string,
-    versionName: string
-  ): Promise<void>;
+  markFileAsDeleted(filePath: string): Promise<void>;
   handleDeletedEntities(
     filePath: string,
     currentFunctions: FunctionNode[],
-    currentClasses: ClassNode[],
-    versionName: string
+    currentClasses: ClassNode[]
   ): Promise<void>;
   processEntityMovements(
     filePath: string,
     functions: FunctionNode[],
-    classes: ClassNode[],
-    versionName: string
+    classes: ClassNode[]
   ): Promise<void>;
   createFunctionNode(func: FunctionNode): Promise<void>;
   createClassNode(cls: ClassNode): Promise<void>;
@@ -101,7 +88,6 @@ export interface INeo4jService {
     dirPath: string,
     projectName: string
   ): Promise<void>;
-  getLatestVersionName(projectName: string): Promise<string | null>;
   getProjectByName(projectName: string): Promise<{
     id: string;
     name: string;
@@ -202,9 +188,6 @@ export interface IFileSystemService {
   isSupportedExtension(extension: string): boolean;
 }
 
-/**
- * Interface for Watcher Manager
- */
 /**
  * Interface for Git Version Manager
  */

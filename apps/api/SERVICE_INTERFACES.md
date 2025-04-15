@@ -4,6 +4,17 @@ This document outlines the service interfaces implemented in the Carver Watcher 
 
 ## Updates and Changes
 
+### April 14, 2025 - Removed Versioning from Neo4j Graph
+
+- Removed version-based tracking from the Neo4j graph database
+- Simplified data model by eliminating Version nodes and related relationships
+- Made `path` property unique on File nodes to ensure data integrity
+- Updated file deletion queries to directly remove nodes instead of marking as deleted
+- Enhanced seeder service to handle file changes without version tracking
+- Modified all processors to work without version dependencies
+- This change improves performance by reducing relationship traversals and simplifies the codebase
+- Changes are backward compatible with existing API endpoints
+
 ### April 14, 2025 - Git Service Enhancement for User Identity
 
 - Fixed bug where Git commit operations were failing due to missing user identity
@@ -123,17 +134,18 @@ interface INeo4jService {
   close(): Promise<void>;
   createConstraintsAndIndexes(): Promise<void>;
   createOrGetProject(projectName: string, rootPath: string): Promise<void>;
-  createVersion(versionName: string, projectName: string): Promise<void>;
-  markFileAsDeleted(filePath: string, versionName: string): Promise<void>;
-  createFileVersionRelationship(
+  markFileAsDeleted(filePath: string): Promise<void>;
+  createFileNode(
     filePath: string,
-    versionName: string
+    fileName: string,
+    fileExtension: string,
+    dirPath: string,
+    projectName: string
   ): Promise<void>;
-  linkEntityToVersion(
-    entityType: 'Function' | 'Class' | 'Variable',
-    name: string,
+  handleDeletedEntities(
     filePath: string,
-    versionName: string
+    currentFunctions: FunctionNode[],
+    currentClasses: ClassNode[]
   ): Promise<void>;
   // Additional methods for handling entities and relationships
   // ...
@@ -144,7 +156,7 @@ interface INeo4jService {
 
 - Neo4j connection management
 - Graph structure setup (constraints/indexes)
-- Project and version management
+- Project management
 - File tracking
 - Code entity tracking
 - Relationship management
@@ -248,7 +260,6 @@ Class methods are now indexed as both:
 **Responsibilities:**
 
 - Processing project files for graph database storage
-- Creating version-tracked relationships
 - Handling individual file changes
 - Reporting processing status
 
@@ -324,8 +335,7 @@ async function handleSingleFileChange(
   rootPath: string,
   projectName: string,
   filePath: string,
-  changeType: 'add' | 'change' | 'unlink',
-  versionName: string
+  changeType: 'add' | 'change' | 'unlink'
 ): Promise<{ success: boolean; message: string }> {
   // Process only the specific file
   // ...
@@ -454,4 +464,4 @@ const sut = new SomeClassUnderTest(mockFileSystemService);
 
 Service interfaces provide a strong foundation for building maintainable, testable, and type-safe applications. They define clear contracts between components, making the codebase more modular and easier to understand.
 
-By implementing service interfaces in the Carver Watcher service, we have improved the overall architecture and made it easier to add new features and maintain existing ones. The recent optimizations to process only changed files demonstrate how well-defined interfaces allow for significant performance improvements without breaking existing functionality.
+By implementing service interfaces in the Carver Watcher service, we have improved the overall architecture and made it easier to add new features and maintain existing ones. The recent optimizations to remove versioning and misleading timestamp calculation demonstrate how well-defined interfaces allow for significant performance improvements without breaking existing functionality.

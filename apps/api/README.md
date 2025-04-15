@@ -4,6 +4,8 @@ The Carver API package provides a RESTful API for the Carver codebase assistant 
 
 ## Recent Updates
 
+- **April 14, 2025**: Removed versioning from Neo4j graph database for simpler structure. This improves performance and maintainability by eliminating the need to track relationships across versions.
+- **April 14, 2025**: Made `path` property on File node unique to ensure data consistency and prevent duplicate entries.
 - **April 14, 2025**: Fixed bug where Git commit operations were failing due to missing user identity. The Git service now automatically configures user.name and user.email from environment variables (GIT_USER_NAME, GIT_USER_EMAIL) or uses default values.
 - **April 14, 2025**: Fixed bug in the folders endpoint where it was returning all folders across the graph instead of only those for the specified project. Updated Neo4j queries to properly filter directories by project path relationships.
 - **April 14, 2025**: Fixed critical bug in the file text replacement endpoint (`PUT /projects/:projectId/files/:fileId`) that was causing valid replacements to fail, especially with template literals and complex multi-line text. Replaced regex-based matching with exact string matching for improved reliability. See `apps/api/docs/FILE_EDIT_FIX.md` for details.

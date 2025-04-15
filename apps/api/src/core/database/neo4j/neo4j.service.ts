@@ -17,14 +17,11 @@ export class Neo4jService implements INeo4jService {
   
   // Project operations
   readonly createOrGetProject = projectOperations.createOrGetProject.bind(projectOperations);
-  readonly createVersion = projectOperations.createVersion.bind(projectOperations);
-  readonly getLatestVersionName = projectOperations.getLatestVersionName.bind(projectOperations);
   readonly getProjectByName = projectOperations.getProjectByName.bind(projectOperations);
   readonly getAllProjects = projectOperations.getAllProjects.bind(projectOperations);
   
   // File operations
   readonly markFileAsDeleted = fileOperations.markFileAsDeleted.bind(fileOperations);
-  readonly createFileVersionRelationship = fileOperations.createFileVersionRelationship.bind(fileOperations);
   readonly createFileNode = fileOperations.createFileNode.bind(fileOperations);
   readonly getAllFiles = fileOperations.getAllFiles.bind(fileOperations);
   readonly searchFilesByProject = fileOperations.searchFilesByProject.bind(fileOperations);
@@ -45,7 +42,6 @@ export class Neo4jService implements INeo4jService {
   readonly getDirectoryTreeByPath = directoryOperations.getDirectoryTreeByPath.bind(directoryOperations);
   
   // Entity operations
-  readonly linkEntityToVersion = entityOperations.linkEntityToVersion.bind(entityOperations);
   readonly handleDeletedEntities = entityOperations.handleDeletedEntities.bind(entityOperations);
   readonly processEntityMovements = entityOperations.processEntityMovements.bind(entityOperations);
   readonly createFunctionNode = entityOperations.createFunctionNode.bind(entityOperations);

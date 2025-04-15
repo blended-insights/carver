@@ -7,49 +7,18 @@ import logger from '@/utils/logger';
  */
 export class FileOperations {
   /**
-   * Mark a file as deleted in the current version
+   * Mark a file as deleted
    * @param filePath File path
-   * @param versionName Version name
    */
-  async markFileAsDeleted(
-    filePath: string,
-    versionName: string
-  ): Promise<void> {
+  async markFileAsDeleted(filePath: string): Promise<void> {
     const client = getNeo4jClient();
     return client.executeInSession(async (session) => {
       try {
         await session.run(FILE_QUERIES.MARK_FILE_AS_DELETED, {
           filePath,
-          versionName,
         });
       } catch (error) {
         logger.error(`Error marking file ${filePath} as deleted:`, error);
-        throw error;
-      }
-    });
-  }
-
-  /**
-   * Create file's relationship to current version
-   * @param filePath File path
-   * @param versionName Version name
-   */
-  async createFileVersionRelationship(
-    filePath: string,
-    versionName: string
-  ): Promise<void> {
-    const client = getNeo4jClient();
-    return client.executeInSession(async (session) => {
-      try {
-        await session.run(FILE_QUERIES.CREATE_FILE_VERSION_RELATIONSHIP, {
-          filePath: filePath,
-          versionName,
-        });
-      } catch (error) {
-        logger.error(
-          `Error creating file-version relationship for ${filePath}:`,
-          error
-        );
         throw error;
       }
     });
