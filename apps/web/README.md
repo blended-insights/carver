@@ -22,6 +22,24 @@ The Carver Dashboard is a user-friendly web interface for managing and monitorin
 - **Server-Sent Events (SSE)**: For real-time updates from Redis to the browser
 - **TypeScript**: For type safety and better developer experience
 
+### API Architecture
+
+The Carver Dashboard implements a secure API architecture where all external API requests are routed through Next.js API routes rather than directly exposing the external API to the browser.
+
+#### Benefits:
+
+- **Enhanced Security**: API credentials and internal endpoints remain server-side
+- **Request Validation**: API routes can validate and sanitize requests before forwarding
+- **Response Filtering**: Sensitive data can be filtered out before reaching the client
+- **Unified Error Handling**: Consistent error handling across all API interactions
+
+#### Implementation:
+
+- All client-side API requests are routed through Next.js API routes in `/app/api/`
+- The API client factory in `src/lib/utils/create-api-client.ts` provides consistent clients
+- Server-side environment variables like `WATCHER_API_URL` are used for secure communication
+- Client-side code never directly accesses the external API
+
 ### Directory Structure
 
 ```
@@ -30,29 +48,38 @@ apps/web/
 ├── public/             # Static assets
 ├── src/
 │   ├── app/            # Next.js application routes
-│   │   ├── api/        # API routes for SSE
+│   │   ├── api/        # API routes that proxy to external services
+│   │   │   ├── admin/  # Admin-specific API routes
+│   │   │   └── watcher/# Watcher API proxy routes
 │   │   ├── folders/    # Folder listing and process detail pages
 │   │   └── page.tsx    # Dashboard home page
-│   ├── components/     # Reusable UI components
-│   ├── hooks/          # Custom React hooks
+│   ├── lib/
+│   │   ├── api/        # API client modules (1:1 with endpoints)
+│   │   ├── hooks/      # React hooks for data fetching (1:1 with API modules)
+│   │   ├── components/ # Reusable UI components
+│   │   ├── types/      # TypeScript type definitions
+│   │   └── utils/      # Utility functions
+│   │       ├── create-api-client.ts # API client factory
+│   │       ├── logger.ts # Logging utility
+│   │       └── redis.ts  # Redis utilities
 │   ├── theme.ts        # Theme configuration
-│   └── utils/          # Utility functions
-│       ├── api.ts      # API client for watcher service
-│       ├── logger.ts   # Logging utility
-│       └── redis.ts    # Redis utilities
 └── package.json        # Dependencies and scripts
 ```
 
-### Components
+### API Client Architecture
 
-- **Layout**: Main application layout with navigation sidebar
-- **WatcherCard**: Card component for displaying watcher processes
-- **PersistedFileChanges**: Timeline component for displaying file changes
-- **PersistedWatcherStatus**: Timeline component for displaying watcher status events
+The application follows a structured pattern for API communication:
 
-### Hooks
+1. **API Client Factory**: The `create-api-client.ts` utility creates configured Axios instances for API requests
+2. **API Modules**: Individual modules in `src/lib/api/` that correspond to specific API endpoints
+3. **React Hooks**: Custom hooks in `src/lib/hooks/` that use SWR for data fetching and caching
+4. **Next.js API Routes**: Server-side routes that proxy requests to the external API
 
-- **usePersistedEvents**: Custom hook for managing Server-Sent Events connection
+This architecture ensures:
+- Separation of concerns
+- Type safety through consistent interfaces
+- Centralized error handling
+- Improved maintainability through modular design
 
 ## Getting Started
 
@@ -79,7 +106,7 @@ Before running the dashboard, make sure you have:
 3. Set up environment variables:
    - Create a `.env.local` file in the `apps/web` directory with:
      ```
-     INTERNAL_WATCHER_API_URL=http://localhost:4000
+     WATCHER_API_URL=http://localhost:4000
      REDIS_URL=redis://localhost:6379
      ```
 
@@ -122,6 +149,14 @@ Each watcher process has its own detail page where you can:
 - View status history for this process
 - Stop or restart the watcher process (the kill button is always enabled for any process)
 
+### Admin Page
+
+The admin page provides access to advanced system management features:
+
+- Cache & Storage: Manage browser storage and API caches
+- Redis Events: View and clear Redis event history
+- Danger Zone: Execute system reset operations (flush Redis, clear Neo4j, reset all)
+
 ## Technical Details
 
 ### Navigation Flow
@@ -144,20 +179,10 @@ The dashboard provides controls for managing watcher processes:
 
 Process control is implemented through the following workflow:
 1. User clicks the kill or restart button
-2. The corresponding API endpoint is called (`/watchers/:processId/kill` or `/watchers/:processId/restart`)
-3. The process state is updated in the backend
-4. For kill actions, the user is automatically redirected to the folders page
-5. For restart actions, real-time status updates are propagated through Redis channels and the UI reflects the new process status
-
-### API Integration
-
-The dashboard integrates with the Carver Watcher API through the following endpoints:
-
-- `GET /folders`: Get a list of available folders
-- `POST /folders/:folderPath/start?project=projectName`: Start a new watcher process
-- `POST /watchers/:processId/kill`: Stop a watcher process
-- `POST /watchers/:processId/restart`: Restart a watcher process
-- `GET /watchers`: Get all active watcher processes
+2. The corresponding hook method is called (from `/hooks/use-watchers.ts`)
+3. The hook method calls the API endpoint (via `/api/watchers.ts`)
+4. The Next.js API route proxies the request to the external API
+5. Real-time status updates are propagated through Redis channels and the UI reflects the new process status
 
 ### Real-time Updates
 
@@ -193,17 +218,15 @@ The application subscribes to two Redis channels:
 
 ## Customization and Development
 
-### Theme Customization
-
-The UI theme is defined in `src/theme.ts`. You can customize colors, fonts, and other UI elements by modifying this file.
-
 ### Adding New Features
 
 To add new features:
 
-1. Create new components in the `src/components` directory
-2. Add new pages in the `src/app` directory following Next.js App Router conventions
-3. Extend API utilities in `src/utils/api.ts` if new endpoints are needed
+1. Create a new API client in `src/lib/api/` for any new API endpoints
+2. Create corresponding hooks in `src/lib/hooks/` for data fetching
+3. Add Next.js API routes in `src/app/api/` to proxy requests to the external API
+4. Create new pages in the `src/app` directory following Next.js App Router conventions
+5. Create new components in the `src/lib/components` directory as needed
 
 ### Building for Production
 
@@ -222,7 +245,7 @@ The production build will be available in the `apps/web/dist` directory.
 If you encounter CORS errors when making API requests:
 
 1. Make sure the watcher service has CORS enabled
-2. Check that the `INTERNAL_WATCHER_API_URL` environment variable is set correctly
+2. Check that the `WATCHER_API_URL` environment variable is set correctly
 3. Ensure the watcher service is running and accessible
 4. For development environments, the API routes have CORS enabled and allow requests from `http://localhost:3000`
 5. For production environments, the API routes allow requests from domains specified in the `ALLOWED_ORIGINS` environment variable. If not specified, it defaults to `https://app.carver.dev`

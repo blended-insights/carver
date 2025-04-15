@@ -3,8 +3,8 @@ import axios from 'axios';
 import { applyCorsHeaders, handleOptionsRequest } from '@/utils';
 
 // Get watcher API URL from environment variables
-const INTERNAL_WATCHER_API_URL =
-  process.env.INTERNAL_WATCHER_API_URL || 'http://localhost:4000';
+const WATCHER_API_URL =
+  process.env.WATCHER_API_URL || 'http://localhost:4000';
 
 // Handle OPTIONS preflight requests
 export async function OPTIONS(request: NextRequest) {
@@ -129,7 +129,7 @@ async function flushRedis(): Promise<{
 }> {
   try {
     const response = await axios.post(
-      `${INTERNAL_WATCHER_API_URL}/admin/redis/flush`,
+      `${WATCHER_API_URL}/admin/redis/flush`,
       {}, // Empty data object
       {
         headers: {
@@ -158,7 +158,7 @@ async function clearNeo4j(): Promise<{
 }> {
   try {
     const response = await axios.post(
-      `${INTERNAL_WATCHER_API_URL}/admin/neo4j/clear`,
+      `${WATCHER_API_URL}/admin/neo4j/clear`,
       {}, // Empty data object
       {
         headers: {

@@ -11,7 +11,7 @@ import axios from 'axios';
 
 // API client setup
 const apiClient = axios.create({
-  baseURL: process.env.INTERNAL_WATCHER_API_URL || 'http://localhost:4000',
+  baseURL: process.env.WATCHER_API_URL || 'http://localhost:4000',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

@@ -26,7 +26,7 @@ This guide provides information for developers who want to extend, modify, or co
 
 3. Create environment file in `apps/web/.env.local`:
    ```
-   INTERNAL_WATCHER_API_URL=http://localhost:4000
+   WATCHER_API_URL=http://localhost:4000
    REDIS_URL=redis://localhost:6379
    ```
 

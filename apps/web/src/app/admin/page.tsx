@@ -18,18 +18,18 @@ import {
   TextInput,
   Flex,
 } from '@mantine/core';
-import { 
-IconSettings, 
-IconDatabase, 
-IconAccessPoint,
-IconTrash,
-IconAlertCircle,
-IconFlame,
-IconSql,
-IconServer,
-IconAlertTriangle,
-IconCheck,
-IconX,
+import {
+  IconSettings,
+  IconDatabase,
+  IconAccessPoint,
+  IconTrash,
+  IconAlertCircle,
+  IconFlame,
+  IconSql,
+  IconServer,
+  IconAlertTriangle,
+  IconCheck,
+  IconX,
 } from '@tabler/icons-react';
 import { Layout } from '@/lib/components/Layout';
 import { SWRCacheStatus } from '@/lib/components/SWRCacheStatus';
@@ -39,7 +39,7 @@ import {
   useStatuses,
 } from '@/lib/store/redis-store';
 import { useDisclosure } from '@mantine/hooks';
-import axios from 'axios';
+import { useDangerAction } from '@/lib/hooks/use-danger-action';
 
 // Helper to safely check if we're in the browser
 const isBrowser = typeof window !== 'undefined';
@@ -52,17 +52,15 @@ export default function AdminPage() {
   const [storageData, setStorageData] = useState<Record<string, string>>({});
   const [storageStats, setStorageStats] = useState({ count: 0, size: '0' });
 
+  // Use the danger action hook
+  const { executeAction, isLoading, result: actionResult } = useDangerAction();
+
   // Danger zone state
   const [opened, { open, close }] = useDisclosure(false);
   const [dangerAction, setDangerAction] = useState<
     'flush-redis' | 'clear-neo4j' | 'clear-all' | null
   >(null);
   const [confirmText, setConfirmText] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [actionResult, setActionResult] = useState<{
-    success: boolean;
-    message: string;
-  } | null>(null);
 
   // Memoize the updateStorageStats function
   const updateStorageStats = useCallback(() => {
@@ -154,7 +152,6 @@ export default function AdminPage() {
     (action: 'flush-redis' | 'clear-neo4j' | 'clear-all') => {
       setDangerAction(action);
       setConfirmText('');
-      setActionResult(null);
       open();
     },
     [open]
@@ -196,31 +193,18 @@ export default function AdminPage() {
     }
   }, [dangerAction]);
 
-  const executeDangerAction = useCallback(async () => {
+  const executeDangerActionHandler = useCallback(async () => {
     if (!dangerAction) return;
 
     const actionDetails = getDangerActionDetails();
 
     // Check if confirmation text matches
     if (confirmText.toLowerCase() !== actionDetails.confirmText) {
-      setActionResult({
-        success: false,
-        message: `Please type "${actionDetails.confirmText}" to confirm this action.`,
-      });
-      return;
+      return; // Don't proceed if confirmation text doesn't match
     }
 
-    setIsLoading(true);
-    setActionResult(null);
-
     try {
-      const response = await axios.post('/api/admin/danger', {
-        action: dangerAction,
-      });
-      setActionResult({
-        success: true,
-        message: response.data.message || 'Operation completed successfully.',
-      });
+      await executeAction(dangerAction);
 
       // Reset local storage for Redis events if flushing Redis
       if (dangerAction === 'flush-redis' || dangerAction === 'clear-all') {
@@ -228,17 +212,14 @@ export default function AdminPage() {
       }
     } catch (error) {
       console.error(`Error executing ${dangerAction}:`, error);
-      setActionResult({
-        success: false,
-        message:
-          axios.isAxiosError(error) && error.response?.data?.message
-            ? error.response.data.message
-            : 'An error occurred while performing the operation.',
-      });
-    } finally {
-      setIsLoading(false);
     }
-  }, [dangerAction, confirmText, getDangerActionDetails, resetRedisState]);
+  }, [
+    dangerAction,
+    confirmText,
+    getDangerActionDetails,
+    executeAction,
+    resetRedisState,
+  ]);
 
   return (
     <Layout>
@@ -514,9 +495,13 @@ export default function AdminPage() {
                 </Button>
                 <Button
                   color="red"
-                  onClick={executeDangerAction}
+                  onClick={executeDangerActionHandler}
                   loading={isLoading}
-                  disabled={!confirmText}
+                  disabled={
+                    !confirmText ||
+                    confirmText.toLowerCase() !==
+                      getDangerActionDetails().confirmText
+                  }
                 >
                   Execute Action
                 </Button>
